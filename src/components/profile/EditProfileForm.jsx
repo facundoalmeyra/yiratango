@@ -3,7 +3,7 @@ import { Instagram, Facebook, MessageCircle, Globe, Loader2, Check, Upload, X, P
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/api/supabaseClient';
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
 import { useI18n } from '@/components/contexts/I18nContext';
@@ -28,7 +28,11 @@ const EditProfileForm = memo(forwardRef(function EditProfileForm({
 
   const { data: allArtists = [] } = useQuery({
     queryKey: ['artists'],
-    queryFn: () => base44.entities.Artist.list()
+    queryFn: async () => {
+      const { data, error } = await supabase.from('artists').select('id, slug');
+      if (error) throw error;
+      return data || [];
+    }
   });
 
   const getInitials = (name) => {
@@ -53,10 +57,7 @@ const EditProfileForm = memo(forwardRef(function EditProfileForm({
       ? (localFormData.partner_name && localFormData.partner_name.trim().length > 0)
       : true;
 
-    // Name and Partner Name (if couple) are always mandatory
     if (!hasName || !hasPartnerName) return false;
-    
-    // Avatar is only mandatory in strict mode (onboarding)
     if (isMandatory && !hasAvatar) return false;
 
     return true;
@@ -119,13 +120,11 @@ const EditProfileForm = memo(forwardRef(function EditProfileForm({
 
     setImageError('');
 
-    // Validate file type
     if (!file.type.startsWith('image/')) {
       setImageError(t('pleaseUploadImage'));
       return;
     }
 
-    // Validate file size
     if (file.size > MAX_IMAGE_SIZE) {
       setImageError(`${t('imageSizeMax')} (${(file.size / 1024 / 1024).toFixed(1)}MB)`);
       return;
@@ -182,13 +181,28 @@ const EditProfileForm = memo(forwardRef(function EditProfileForm({
         reader.onerror = () => reject(new Error('File read failed'));
       });
 
-      const { file_url } = await base44.integrations.Core.UploadFile({ file: resizedFile });
-      setLocalFormData({ ...localFormData, avatar_url: file_url });
-      
+      // Upload to Supabase Storage
+      const fileName = `avatars/${localFormData.id || 'new'}-${Date.now()}.webp`;
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, resizedFile, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(fileName);
+
+      setLocalFormData({ ...localFormData, avatar_url: publicUrl });
+
       if (localFormData.id && !isMandatory) {
-        await base44.entities.Artist.update(localFormData.id, { avatar_url: file_url });
+        const { error } = await supabase
+          .from('artists')
+          .update({ avatar_url: publicUrl })
+          .eq('id', localFormData.id);
+        if (error) throw error;
       }
-      
+
       toast.success(t('profileImageUpdated'));
     } catch (error) {
       setImageError(t('uploadFailed'));
@@ -210,7 +224,6 @@ const EditProfileForm = memo(forwardRef(function EditProfileForm({
       return;
     }
 
-    // Validate username format: alphanumeric, dots, underscores only
     if (!/^[a-zA-Z0-9._-]+$/.test(username)) {
       setUsernameError(t('usernameFormat'));
       setUsernameAvailable(false);
@@ -236,7 +249,7 @@ const EditProfileForm = memo(forwardRef(function EditProfileForm({
 
   return (
     <div className="space-y-6">
-      {/* Profile Photo - Moved to top */}
+      {/* Profile Photo */}
       <div>
         <label className="text-sm text-white/50 mb-4 block">
           {t('profilePhoto')} {isMandatory && <span className="text-red-400">*</span>}
@@ -269,7 +282,6 @@ const EditProfileForm = memo(forwardRef(function EditProfileForm({
               )}
             </div>
 
-            {/* Pencil Overlay */}
             <div className="absolute bottom-1 right-1 z-50 p-3 bg-white rounded-full shadow-lg border-4 border-[#1A1A1A] group-hover:bg-gray-200 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center">
               {uploadingImage ? (
                 <Loader2 className="w-4 h-4 animate-spin text-black" />
@@ -288,14 +300,12 @@ const EditProfileForm = memo(forwardRef(function EditProfileForm({
             />
           </div>
 
-          {/* Error Message */}
           {imageError && (
             <p className="text-xs text-red-400 mt-2 flex items-center gap-1">
               {imageError}
             </p>
           )}
 
-          {/* Mandatory Error */}
           {isMandatory && !localFormData.avatar_url && (
             <p className="text-xs text-red-400 mt-2">
               {t('profilePhotoRequired')}
@@ -304,7 +314,6 @@ const EditProfileForm = memo(forwardRef(function EditProfileForm({
         </div>
       </div>
 
-      {/* Category and Profile Type are read-only when editing an existing profile to maintain URL structure */}
       <div className="flex gap-4">
         <div className="flex-1">
           <label className="text-sm text-white/50 mb-2 block">{t('artistType')}</label>
@@ -332,7 +341,6 @@ const EditProfileForm = memo(forwardRef(function EditProfileForm({
             const name = e.target.value;
             setLocalFormData(prev => {
               const newData = { ...prev, name };
-              // Auto-update slug if it matches old name or is empty, but only if they haven't manually edited the slug
               if (!prev.slug || prev.slug === prev.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '')) {
                 newData.slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
               }
@@ -355,7 +363,6 @@ const EditProfileForm = memo(forwardRef(function EditProfileForm({
               const partnerName = e.target.value;
               setLocalFormData(prev => {
                 const newData = { ...prev, partner_name: partnerName };
-                // Auto-update slug if it was auto-generated
                 const oldAutoSlug = `${prev.name} and ${prev.partner_name}`.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
                 if (!prev.slug || prev.slug === oldAutoSlug) {
                    newData.slug = `${prev.name} and ${partnerName}`.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
