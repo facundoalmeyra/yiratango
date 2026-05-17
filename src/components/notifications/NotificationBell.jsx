@@ -1,6 +1,6 @@
 import React from 'react';
 import { Bell } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/api/supabaseClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Link } from 'react-router-dom';
@@ -12,22 +12,34 @@ import { useI18n } from '@/components/contexts/I18nContext';
 export default function NotificationBell({ user }) {
   const { t, lang } = useI18n();
   const queryClient = useQueryClient();
+
   const { data: notifications = [] } = useQuery({
     queryKey: ['notifications', user?.email || user?.id],
-    queryFn: () => base44.entities.Notification.filter({ fan_user_id: user?.email || user?.id }, '-created_date'),
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('fan_user_id', user?.email || user?.id)
+        .order('created_date', { ascending: false });
+      return data || [];
+    },
     enabled: !!user,
     refetchInterval: 30000
   });
 
   const markAsReadMutation = useMutation({
-    mutationFn: async (id) => base44.entities.Notification.update(id, { is_read: true }),
+    mutationFn: async (id) => {
+      await supabase.from('notifications').update({ is_read: true }).eq('id', id);
+    },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notifications'] })
   });
 
   const markAllAsReadMutation = useMutation({
     mutationFn: async () => {
       const unread = notifications.filter(n => !n.is_read);
-      await Promise.all(unread.map(n => base44.entities.Notification.update(n.id, { is_read: true })));
+      await Promise.all(unread.map(n =>
+        supabase.from('notifications').update({ is_read: true }).eq('id', n.id)
+      ));
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notifications'] })
   });
@@ -51,7 +63,7 @@ export default function NotificationBell({ user }) {
         <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
           <h3 className="font-semibold text-sm">{t('notificationsTitle')}</h3>
           {unreadCount > 0 && (
-            <button 
+            <button
               onClick={() => markAllAsReadMutation.mutate()}
               className="text-xs text-white/50 hover:text-white transition-colors"
             >
@@ -69,7 +81,7 @@ export default function NotificationBell({ user }) {
               {notifications.map((n) => {
                 const isFollowerNotification = n.type === 'new_follower';
                 const isFanRequest = n.type === 'fan_request';
-                
+
                 const translateMessage = (msg) => {
                   if (lang !== 'es') return msg;
                   let translated = msg;
@@ -106,11 +118,11 @@ export default function NotificationBell({ user }) {
                         )}
                       </div>
                       <div className="text-[10px] text-white/40 mt-1.5">
-                        {n.created_date 
-                          ? formatDistanceToNow(new Date(n.created_date), { 
-                              addSuffix: true, 
-                              locale: lang === 'es' ? es : undefined 
-                            }) 
+                        {n.created_date
+                          ? formatDistanceToNow(new Date(n.created_date), {
+                              addSuffix: true,
+                              locale: lang === 'es' ? es : undefined
+                            })
                           : t('justNow')}
                       </div>
                     </div>
@@ -120,7 +132,7 @@ export default function NotificationBell({ user }) {
                 const getLinkUrl = () => {
                   if (isFanRequest && n.link) return n.link;
                   if (n.link && n.link.startsWith('/artist')) {
-                     return `${createPageUrl('ArtistProfile')}?p=${n.artist_slug}`;
+                    return `${createPageUrl('ArtistProfile')}?p=${n.artist_slug}`;
                   }
                   return n.link || null;
                 };
@@ -128,18 +140,18 @@ export default function NotificationBell({ user }) {
                 const url = getLinkUrl();
 
                 if (isFollowerNotification || !url) {
-                   return (
-                     <div key={n.id} onClick={() => { if(!n.is_read) markAsReadMutation.mutate(n.id); }} className="cursor-pointer">
-                       <NotificationContent />
-                     </div>
-                   );
+                  return (
+                    <div key={n.id} onClick={() => { if (!n.is_read) markAsReadMutation.mutate(n.id); }} className="cursor-pointer">
+                      <NotificationContent />
+                    </div>
+                  );
                 }
 
                 return (
-                  <Link 
+                  <Link
                     key={n.id}
-                    to={url} 
-                    onClick={() => { if(!n.is_read) markAsReadMutation.mutate(n.id); }}
+                    to={url}
+                    onClick={() => { if (!n.is_read) markAsReadMutation.mutate(n.id); }}
                     className="block"
                   >
                     <NotificationContent />
