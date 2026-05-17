@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { KeyRound, Loader2, Eye, EyeOff, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/api/supabaseClient';
 import { toast } from 'sonner';
 import { useI18n } from '@/components/contexts/I18nContext';
 
@@ -27,15 +27,31 @@ export default function ChangePasswordSection({ user }) {
 
     setIsSaving(true);
     try {
-      await base44.auth.changePassword({
-        userId: user.id,
-        currentPassword,
-        newPassword,
+      // Verify current password by attempting to re-authenticate
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: currentPassword,
       });
-      toast.success(t('passwordChanged'));
-      setCurrentPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
+
+      if (signInError) {
+        toast.error(t('currentPasswordIncorrect'));
+        setIsSaving(false);
+        return;
+      }
+
+      // Update password
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+
+      if (error) {
+        toast.error(t('passwordChangeFailed'));
+      } else {
+        toast.success(t('passwordChanged'));
+        setCurrentPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+      }
     } catch (err) {
       toast.error(t('passwordChangeFailed'));
     } finally {

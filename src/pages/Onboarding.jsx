@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/api/supabaseClient';
 // Organizer entity is now separate from Fan
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
@@ -19,7 +19,7 @@ export default function Onboarding() {
   useEffect(() => {
     const loadUser = async () => {
       try {
-        const currentUser = await base44.auth.me();
+        const { data: { user: currentUser } } = await supabase.auth.getUser();
         if (!currentUser) {
           window.location.href = createPageUrl('Map');
           return;
@@ -36,19 +36,31 @@ export default function Onboarding() {
 
   const { data: artists = [], isLoading: loadingArtists } = useQuery({
     queryKey: ['artists'],
-    queryFn: () => base44.entities.Artist.list(),
+    queryFn: async () => {
+      const { data, error } = await supabase.from('artists').select('*');
+      if (error) throw error;
+      return data || [];
+    },
     enabled: !!user,
   });
 
   const { data: fans = [], isLoading: loadingFans } = useQuery({
     queryKey: ['fans_check', user?.email || user?.id],
-    queryFn: () => base44.entities.Fan.filter({ user_id: user?.email || user?.id }),
+    queryFn: async () => {
+      const { data, error } = await supabase.from('fans').select('*').eq('user_id', user?.email || user?.id);
+      if (error) throw error;
+      return data || [];
+    },
     enabled: !!user,
   });
 
   const { data: organizers = [], isLoading: loadingOrganizers } = useQuery({
     queryKey: ['organizers_check', user?.email || user?.id],
-    queryFn: () => base44.entities.Organizer.filter({ user_id: user?.email || user?.id }),
+    queryFn: async () => {
+      const { data, error } = await supabase.from('organizers').select('*').eq('user_id', user?.email || user?.id);
+      if (error) throw error;
+      return data || [];
+    },
     enabled: !!user,
   });
 
@@ -90,7 +102,7 @@ export default function Onboarding() {
           }
         }}
         onSkip={async () => {
-          await base44.auth.logout();
+          await supabase.auth.signOut();
           window.location.href = createPageUrl('Map');
         }}
       />

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/api/supabaseClient';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
@@ -179,8 +179,8 @@ export default function List() {
   useEffect(() => {
     const loadUser = async () => {
       try {
-        const currentUser = await base44.auth.me();
-        setUser(currentUser);
+        const { data: { user } } = await supabase.auth.getUser();
+        setUser(user);
       } catch (err) {
         setUser(null);
       } finally {
@@ -192,19 +192,31 @@ export default function List() {
 
   const { data: artists = [], isLoading: loadingArtists, isRefetching: refetchingArtists } = useQuery({
     queryKey: ['artists'],
-    queryFn: () => base44.entities.Artist.list(),
+    queryFn: async () => {
+      const { data, error } = await supabase.from('artists').select('*');
+      if (error) throw error;
+      return data || [];
+    },
     staleTime: 1000 * 60 * 5,
   });
 
   const { data: tours = [], isLoading: loadingTours } = useQuery({
     queryKey: ['tours'],
-    queryFn: () => base44.entities.Tour.list(),
+    queryFn: async () => {
+      const { data, error } = await supabase.from('tours').select('*');
+      if (error) throw error;
+      return data || [];
+    },
     staleTime: 1000 * 60 * 5,
   });
 
   const { data: fans = [], isLoading: loadingFans, isRefetching: refetchingFans } = useQuery({
     queryKey: ['fans_check', user?.email || user?.id],
-    queryFn: () => base44.entities.Fan.filter({ user_id: user?.email || user?.id }),
+    queryFn: async () => {
+      const { data, error } = await supabase.from('fans').select('*').eq('user_id', user?.email || user?.id);
+      if (error) throw error;
+      return data || [];
+    },
     enabled: !!user,
   });
 
@@ -213,7 +225,11 @@ export default function List() {
 
   const { data: unreadRequests = [] } = useQuery({
     queryKey: ['unread_visit_requests_list', calculatedProfile?.id],
-    queryFn: () => base44.entities.VisitRequest.filter({ artist_id: calculatedProfile.id, status: 'unread' }),
+    queryFn: async () => {
+      const { data, error } = await supabase.from('visit_requests').select('*').eq('artist_id', calculatedProfile.id).eq('status', 'unread');
+      if (error) throw error;
+      return data || [];
+    },
     enabled: !!calculatedProfile?.id,
   });
   const hasUnreadRequests = unreadRequests.length > 0;
@@ -304,7 +320,7 @@ export default function List() {
 
   useEffect(() => {
     if (!loadingUser && !loadingArtists && !refetchingArtists && !loadingFans && !refetchingFans && user && !calculatedProfile && !calculatedHasFanProfile) {
-      base44.auth.logout();
+      supabase.auth.signOut();
     }
   }, [loadingUser, loadingArtists, refetchingArtists, loadingFans, refetchingFans, user, calculatedProfile, calculatedHasFanProfile]);
 

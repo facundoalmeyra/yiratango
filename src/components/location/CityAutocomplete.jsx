@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MapPin, Loader2, Search, Check } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/api/supabaseClient';
 import { Popover, PopoverContent, PopoverAnchor } from "@/components/ui/popover";
 import { useI18n } from '@/components/contexts/I18nContext';
 import { translateCountryToSpanish } from '@/components/utils/spanishToEnglish';
@@ -34,27 +34,32 @@ export default function CityAutocomplete({
 
     setIsLoading(true);
     try {
-      const result = await base44.integrations.Core.InvokeLLM({
-        prompt: `Find the top 5 real cities matching "${searchQuery}". The user may be typing in Spanish or English. Return ONLY valid, well-known cities with accurate coordinates. Always return city and country names in English regardless of the input language.`,
-        add_context_from_internet: true,
-        response_json_schema: {
-          type: "object",
-          properties: {
-            cities: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  city: { type: "string" },
-                  country: { type: "string" },
-                  latitude: { type: "number" },
-                  longitude: { type: "number" }
+      const { data, error: invokeError } = await supabase.functions.invoke('invokeLLM', {
+        body: {
+          prompt: `Find the top 5 real cities matching "${searchQuery}". The user may be typing in Spanish or English. Return ONLY valid, well-known cities with accurate coordinates. Always return city and country names in English regardless of the input language.`,
+          add_context_from_internet: true,
+          response_json_schema: {
+            type: "object",
+            properties: {
+              cities: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    city: { type: "string" },
+                    country: { type: "string" },
+                    latitude: { type: "number" },
+                    longitude: { type: "number" }
+                  }
                 }
               }
             }
           }
         }
       });
+
+      if (invokeError) throw invokeError;
+      const result = data;
 
       if (result?.cities) {
         setSuggestions(result.cities.slice(0, 5));

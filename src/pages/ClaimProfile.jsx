@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/api/supabaseClient';
 import { createPageUrl } from '@/utils';
 import Logo from '@/components/ui/Logo';
 import SEO from '@/components/seo/SEO';
@@ -29,11 +29,10 @@ export default function ClaimProfile() {
 
   // Check auth status
   useEffect(() => {
-    base44.auth.isAuthenticated().then(async (authed) => {
-      if (authed) {
-        const me = await base44.auth.me();
-        setUser(me);
-      }
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUser(user);
+      setCheckingAuth(false);
+    }).catch(() => {
       setCheckingAuth(false);
     });
   }, []);
@@ -47,8 +46,11 @@ export default function ClaimProfile() {
     if (upper.trim().length === 8) {
       setLoadingPreview(true);
       try {
-        const res = await base44.functions.invoke('lookupArtistByCode', { claim_code: upper.trim() });
-        setArtistPreview(res.data.found ? { name: res.data.name, avatar_url: res.data.avatar_url } : null);
+        const { data, error } = await supabase.functions.invoke('lookupArtistByCode', {
+          body: { claim_code: upper.trim() }
+        });
+        if (error) throw error;
+        setArtistPreview(data?.found ? { name: data.name, avatar_url: data.avatar_url } : null);
       } catch {
         setArtistPreview(null);
       } finally {
@@ -59,8 +61,13 @@ export default function ClaimProfile() {
     }
   };
 
-  const handleLogin = () => {
-    base44.auth.redirectToLogin(window.location.href);
+  const handleLogin = async () => {
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}${window.location.pathname}?code=${code}`
+      }
+    });
   };
 
   const handleClaim = async () => {
@@ -69,8 +76,11 @@ export default function ClaimProfile() {
     setMessage('');
 
     try {
-      const response = await base44.functions.invoke('claimArtistProfile', { claim_code: code.trim() });
-      setArtistName(response.data.artist_name);
+      const { data, error } = await supabase.functions.invoke('claimArtistProfile', {
+        body: { claim_code: code.trim() }
+      });
+      if (error) throw error;
+      setArtistName(data?.artist_name);
       setStatus('success');
 
       // Redirect to ProfileSettings after 2 seconds (bypass onboarding)
@@ -78,7 +88,7 @@ export default function ClaimProfile() {
         navigate(createPageUrl('ProfileSettings') + '?tab=dates', { replace: true });
       }, 2000);
     } catch (err) {
-      const errMsg = err?.response?.data?.error || err?.message || 'Invalid code. Please try again.';
+      const errMsg = err?.message || 'Invalid code. Please try again.';
       setMessage(errMsg);
       setStatus('error');
     }

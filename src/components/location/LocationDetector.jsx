@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Navigation, Loader2, MapPin, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/api/supabaseClient';
 
 export default function LocationDetector({ onLocationDetected, disabled = false }) {
   const [isDetecting, setIsDetecting] = useState(false);
@@ -23,18 +23,23 @@ export default function LocationDetector({ onLocationDetected, disabled = false 
         
         try {
           // Reverse geocode to get city/country
-          const result = await base44.integrations.Core.InvokeLLM({
-            prompt: `What city and country are at coordinates latitude ${latitude}, longitude ${longitude}? Return the exact city name and country.`,
-            add_context_from_internet: true,
-            response_json_schema: {
-              type: "object",
-              properties: {
-                city: { type: "string" },
-                country: { type: "string" },
-                formatted_address: { type: "string" }
+          const { data, error: invokeError } = await supabase.functions.invoke('invokeLLM', {
+            body: {
+              prompt: `What city and country are at coordinates latitude ${latitude}, longitude ${longitude}? Return the exact city name and country.`,
+              add_context_from_internet: true,
+              response_json_schema: {
+                type: "object",
+                properties: {
+                  city: { type: "string" },
+                  country: { type: "string" },
+                  formatted_address: { type: "string" }
+                }
               }
             }
           });
+
+          if (invokeError) throw invokeError;
+          const result = data;
 
           if (result?.city && result?.country) {
             onLocationDetected({

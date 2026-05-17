@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/api/supabaseClient';
 import { useI18n } from '@/components/contexts/I18nContext';
 import Logo from '@/components/ui/Logo';
 
@@ -17,12 +17,11 @@ export default function WelcomeModal() {
 
     const checkAuth = async () => {
       try {
-        await base44.auth.me();
-        // User is logged in — never show
-      } catch {
-        // Not authenticated — show after a short delay
-        setTimeout(() => setIsOpen(true), 1200);
-      }
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) return; // User is logged in — never show
+      } catch {}
+      // Not authenticated — show after a short delay
+      setTimeout(() => setIsOpen(true), 1200);
     };
 
     checkAuth();
@@ -33,9 +32,14 @@ export default function WelcomeModal() {
     setIsOpen(false);
   };
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     sessionStorage.setItem(SESSION_KEY, '1');
-    base44.auth.redirectToLogin(window.location.href);
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.href
+      }
+    });
   };
 
   return (
