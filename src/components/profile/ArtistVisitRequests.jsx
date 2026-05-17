@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/api/supabaseClient';
 import { MapPin, Trash2, Users, Briefcase } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useI18n } from '@/components/contexts/I18nContext';
@@ -104,21 +104,30 @@ export default function ArtistVisitRequests({ artistId }) {
 
   const { data: requests = [], isLoading } = useQuery({
     queryKey: ['visit_requests_for_artist', artistId],
-    queryFn: () => base44.entities.VisitRequest.filter({ artist_id: artistId }, '-created_date'),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('visit_requests')
+        .select('*')
+        .eq('artist_id', artistId)
+        .order('created_date', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
     enabled: !!artistId,
   });
 
-  // Split by request_type — default to 'visit' for legacy records without request_type
   const fanRequests = requests.filter(r => !r.request_type || r.request_type === 'visit');
   const organizerRequests = requests.filter(r => r.request_type === 'collaboration');
-
   const unreadRequests = requests.filter(r => r.status === 'unread');
 
   const markAsReadMutation = useMutation({
     mutationFn: async () => {
-      await Promise.all(unreadRequests.map(req =>
-        base44.entities.VisitRequest.update(req.id, { status: 'read' })
-      ));
+      const ids = unreadRequests.map(r => r.id);
+      const { error } = await supabase
+        .from('visit_requests')
+        .update({ status: 'read' })
+        .in('id', ids);
+      if (error) throw error;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['visit_requests_for_artist', artistId] })
   });
@@ -128,17 +137,34 @@ export default function ArtistVisitRequests({ artistId }) {
   }, [unreadRequests.length]);
 
   const deleteAllFansMutation = useMutation({
-    mutationFn: async () => { await Promise.all(fanRequests.map(r => base44.entities.VisitRequest.delete(r.id))); },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['visit_requests_for_artist', artistId] }); setConfirmingDeleteFans(false); }
+    mutationFn: async () => {
+      const ids = fanRequests.map(r => r.id);
+      const { error } = await supabase.from('visit_requests').delete().in('id', ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['visit_requests_for_artist', artistId] });
+      setConfirmingDeleteFans(false);
+    }
   });
 
   const deleteAllOrganizersMutation = useMutation({
-    mutationFn: async () => { await Promise.all(organizerRequests.map(r => base44.entities.VisitRequest.delete(r.id))); },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['visit_requests_for_artist', artistId] }); setConfirmingDeleteOrganizers(false); }
+    mutationFn: async () => {
+      const ids = organizerRequests.map(r => r.id);
+      const { error } = await supabase.from('visit_requests').delete().in('id', ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['visit_requests_for_artist', artistId] });
+      setConfirmingDeleteOrganizers(false);
+    }
   });
 
   const deleteOneMutation = useMutation({
-    mutationFn: async (id) => { await base44.entities.VisitRequest.delete(id); },
+    mutationFn: async (id) => {
+      const { error } = await supabase.from('visit_requests').delete().eq('id', id);
+      if (error) throw error;
+    },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['visit_requests_for_artist', artistId] })
   });
 
@@ -151,7 +177,6 @@ export default function ArtistVisitRequests({ artistId }) {
         <p className="text-white/50 text-sm mt-1">{requests.length} {t('totalRequests')}</p>
       </div>
 
-      {/* Fan Requests Section */}
       <RequestGroup
         title={t('fanRequests')}
         icon={Users}
@@ -165,10 +190,8 @@ export default function ArtistVisitRequests({ artistId }) {
         isPendingDeleteOne={deleteOneMutation.isPending}
       />
 
-      {/* Divider */}
       <div className="border-t border-white/10 mx-6" />
 
-      {/* Organizer Requests Section */}
       <RequestGroup
         title={t('organizerRequests')}
         icon={Briefcase}
