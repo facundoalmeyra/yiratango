@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/api/supabaseClient';
 import { motion } from 'framer-motion';
 import { ArrowLeft, MapPin, Globe, Instagram, Facebook, MessageCircle, ExternalLink, Radio, Plane, Calendar, Camera, Share2, Plus } from 'lucide-react';
 import { format } from 'date-fns';
@@ -25,16 +25,17 @@ export default function ArtistProfileContent({ artistIdOrSlug }) {
   const p = artistIdOrSlug;
 
   useEffect(() => {
-    base44.auth.me().then(setUser).catch(() => setUser(null));
+    supabase.auth.getUser().then(({ data: { user } }) => setUser(user)).catch(() => setUser(null));
   }, []);
 
   const { data: artists, isLoading: loadingArtist } = useQuery({
     queryKey: ['artist', p],
     queryFn: async () => {
       if (!p) return [];
-      const bySlug = await base44.entities.Artist.filter({ slug: p }, null, 1);
+      const { data: bySlug } = await supabase.from('artists').select('*').eq('slug', p).limit(1);
       if (bySlug && bySlug.length > 0) return bySlug;
-      return base44.entities.Artist.filter({ id: p }, null, 1);
+      const { data: byId } = await supabase.from('artists').select('*').eq('id', p).limit(1);
+      return byId || [];
     },
     enabled: !!p
   });
@@ -44,11 +45,13 @@ export default function ArtistProfileContent({ artistIdOrSlug }) {
   const { data: tours } = useQuery({
     queryKey: ['tours', artist?.id],
     queryFn: async () => {
-      const [byId, bySlug] = await Promise.all([
-        base44.entities.Tour.filter({ artist_id: artist.id }, 'start_date', 100),
-        artist.slug ? base44.entities.Tour.filter({ artist_id: artist.slug }, 'start_date', 100) : Promise.resolve([]),
+      const [{ data: byId }, { data: bySlug }] = await Promise.all([
+        supabase.from('tours').select('*').eq('artist_id', artist.id).order('start_date'),
+        artist.slug
+          ? supabase.from('tours').select('*').eq('artist_id', artist.slug).order('start_date')
+          : Promise.resolve({ data: [] }),
       ]);
-      const all = [...byId, ...bySlug];
+      const all = [...(byId || []), ...(bySlug || [])];
       const seen = new Set();
       return all.filter(t => { if (seen.has(t.id)) return false; seen.add(t.id); return true; });
     },
@@ -263,7 +266,6 @@ export default function ArtistProfileContent({ artistIdOrSlug }) {
 
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-cyan-500/30 pb-20 relative overflow-hidden">
-        {/* Fixed background — stays viewport-sized regardless of page scroll height */}
         <div className="fixed inset-0 z-0 pointer-events-none bg-black">
             <div className={`absolute inset-0 opacity-60 transition-all duration-1000 ease-in-out grayscale ${bgLoaded ? 'blur-0 scale-100' : 'blur-xl scale-105'}`}>
                 <img 
@@ -280,7 +282,6 @@ export default function ArtistProfileContent({ artistIdOrSlug }) {
                   loading="lazy"
                 />
             </div>
-            {/* Gradient: subtle at top, heavy black from 50% down */}
             <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 0%, transparent 30%, rgba(15,15,15,0.7) 55%, #0F0F0F 75%)' }} />
         </div>
 
