@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
 import Logo from '@/components/ui/Logo';
 import { createPageUrl } from '@/utils';
 import LanguageSwitcher from '@/components/map/LanguageSwitcher';
@@ -59,10 +58,10 @@ export default function ArtistsLanding() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [lastScrollY]);
 
-  const handleAuth = (e) => {
-    e.preventDefault();
-    base44.auth.redirectToLogin(window.location.origin + createPageUrl('Map'));
-  };
+const handleAuth = (e) => {
+  e.preventDefault();
+  window.location.href = '/login';
+};
 
   const faqData = isEn ? [
     {
