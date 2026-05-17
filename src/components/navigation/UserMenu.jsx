@@ -109,24 +109,12 @@ export default function UserMenu({
           ) : (
           <div className="flex items-center gap-2 pointer-events-auto">
             <LanguageSwitcher />
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                window.location.href = '/login';
-              }}
-              className="flex items-center justify-center px-4 h-8 rounded-full text-white hover:bg-white/10 transition-all font-medium text-xs pointer-events-auto cursor-pointer whitespace-nowrap flex-shrink-0"
-            >
+            <Link to={createPageUrl('Login')} className="flex items-center justify-center px-4 h-8 rounded-full text-white hover:bg-white/10 transition-all font-medium text-xs pointer-events-auto cursor-pointer whitespace-nowrap flex-shrink-0">
               {t('login')}
-            </button>
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                window.location.href = '/login';
-              }}
-              className="flex items-center justify-center px-4 h-8 rounded-full bg-white text-black hover:bg-white/90 transition-all font-medium text-xs shadow-lg pointer-events-auto cursor-pointer whitespace-nowrap flex-shrink-0"
-            >
+            </Link>
+            <Link to={createPageUrl('Login')} className="flex items-center justify-center px-4 h-8 rounded-full bg-white text-black hover:bg-white/90 transition-all font-medium text-xs shadow-lg pointer-events-auto cursor-pointer whitespace-nowrap flex-shrink-0">
               {t('createFreeAccount')}
-            </button>
+            </Link>
           </div>
           )
       }
