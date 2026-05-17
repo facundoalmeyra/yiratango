@@ -1,45 +1,48 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
-import { Check, Loader2, MapPin, HandHeart } from 'lucide-react';
+import { supabase } from '@/api/supabaseClient';
+import { Check, Loader2, HandHeart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import UserAvatar from '@/components/profile/UserAvatar';
 import { createPageUrl } from '@/utils';
 import { useI18n } from '@/components/contexts/I18nContext';
+import { useNavigate } from 'react-router-dom';
 
 export default function VisitRequestCard({ artist }) {
   const { t } = useI18n();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    const loadUser = async () => {
-      try {
-        const u = await base44.auth.me();
-        setUser(u);
-      } catch (e) {
-        setUser(null);
-      }
-    };
-    loadUser();
+    supabase.auth.getUser()
+      .then(({ data: { user } }) => setUser(user))
+      .catch(() => setUser(null));
   }, []);
 
   const { data: fans = [] } = useQuery({
     queryKey: ['fans', user?.email],
-    queryFn: () => base44.entities.Fan.filter({ user_id: user?.email }),
+    queryFn: async () => {
+      const { data } = await supabase.from('fans').select('*').eq('user_id', user?.email);
+      return data || [];
+    },
     enabled: !!user?.email,
   });
-  
+
   const fanProfile = fans[0];
   const isOrganizer = fanProfile?.role_type === 'organizer';
 
   const { data: existingRequests = [], isLoading: loadingRequests } = useQuery({
     queryKey: ['visit_requests', artist?.id, user?.email],
-    queryFn: () => base44.entities.VisitRequest.filter({ 
-      artist_id: artist.id,
-      fan_user_id: user?.email 
-    }),
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('visit_requests')
+        .select('*')
+        .eq('artist_id', artist.id)
+        .eq('fan_user_id', user?.email);
+      return data || [];
+    },
     enabled: !!user?.email && !!artist?.id,
   });
 
@@ -48,29 +51,36 @@ export default function VisitRequestCard({ artist }) {
   const createRequestMutation = useMutation({
     mutationFn: async () => {
       const requestType = isOrganizer ? 'collaboration' : 'visit';
-      // Create request
-      const newRequest = await base44.entities.VisitRequest.create({
+
+      const { error: reqError } = await supabase.from('visit_requests').insert({
         artist_id: artist.id,
         fan_user_id: user.email,
-        fan_name: fanProfile?.name || user.full_name || 'Tango Fan',
-        fan_avatar_url: fanProfile?.avatar_url || user.avatar_url || user.picture || '',
+        fan_name: fanProfile?.name || user.user_metadata?.full_name || 'Tango Fan',
+        fan_avatar_url: fanProfile?.avatar_url || user.user_metadata?.avatar_url || '',
         city: fanProfile?.city || 'Unknown',
         request_type: requestType,
         status: 'unread'
       });
-      
-      const artistUser = await base44.entities.Artist.get(artist.id);
+      if (reqError) throw reqError;
 
-      await base44.entities.Notification.create({
-        fan_user_id: artistUser.created_by, // Send to the artist's email
-        artist_id: artist.id,
-        artist_name: fanProfile?.name || user.full_name || 'Tango Fan', // We'll re-use these fields
-        artist_slug: artist.slug || artist.id, 
-        artist_avatar: fanProfile?.avatar_url || user.avatar_url || user.picture || '',
-        type: 'fan_request',
-        message: `requested you to visit ${fanProfile?.city || 'their city'}`,
-        link: `${createPageUrl('ProfileSettings')}?tab=requests`
-      });
+      const { data: artistData } = await supabase
+        .from('artists')
+        .select('created_by, slug')
+        .eq('id', artist.id)
+        .single();
+
+      if (artistData?.created_by) {
+        await supabase.from('notifications').insert({
+          fan_user_id: artistData.created_by,
+          artist_id: artist.id,
+          artist_name: fanProfile?.name || user.user_metadata?.full_name || 'Tango Fan',
+          artist_slug: artist.slug || artist.id,
+          artist_avatar: fanProfile?.avatar_url || user.user_metadata?.avatar_url || '',
+          type: 'fan_request',
+          message: `requested you to visit ${fanProfile?.city || 'their city'}`,
+          link: `${createPageUrl('ProfileSettings')}?tab=requests`
+        });
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['visit_requests', artist?.id, user?.email] });
@@ -80,17 +90,14 @@ export default function VisitRequestCard({ artist }) {
 
   const handleRequestClick = () => {
     if (!user) {
-      const url = new URL(window.location.href);
-      base44.auth.redirectToLogin(url.toString());
+      navigate(createPageUrl('Login'));
       return;
     }
-
     if (fanProfile && (!fanProfile?.city || fanProfile.city === 'Unknown')) {
       toast.error('Please add your city to your profile first.');
-      window.location.href = `${createPageUrl('FanProfile')}?tab=account`;
+      navigate(`${createPageUrl('FanProfile')}?tab=account`);
       return;
     }
-    
     createRequestMutation.mutate();
   };
 
@@ -120,7 +127,7 @@ export default function VisitRequestCard({ artist }) {
               {t('requested')} <Check className="w-4 h-4 text-cyan-400" />
             </div>
           ) : (
-            <Button 
+            <Button
               onClick={handleRequestClick}
               disabled={createRequestMutation.isPending}
               variant="outline"
