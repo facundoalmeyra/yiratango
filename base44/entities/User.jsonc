@@ -1,0 +1,17 @@
+{
+  "name": "User",
+  "type": "object",
+  "properties": {
+    "role": {
+      "type": "string",
+      "enum": [
+        "admin",
+        "fan",
+        "artist",
+        "organizer"
+      ],
+      "default": "fan"
+    }
+  },
+  "required": []
+}

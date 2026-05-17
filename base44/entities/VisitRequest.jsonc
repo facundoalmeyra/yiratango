@@ -1,0 +1,54 @@
+{
+  "name": "VisitRequest",
+  "type": "object",
+  "properties": {
+    "artist_id": {
+      "type": "string",
+      "description": "Reference to the Artist ID"
+    },
+    "fan_user_id": {
+      "type": "string",
+      "description": "The user ID (email) of the fan/organizer making the request"
+    },
+    "fan_name": {
+      "type": "string",
+      "description": "Name of the fan/organizer making the request"
+    },
+    "fan_avatar_url": {
+      "type": "string",
+      "description": "Avatar of the fan/organizer"
+    },
+    "city": {
+      "type": "string",
+      "description": "City requested"
+    },
+    "request_type": {
+      "type": "string",
+      "enum": [
+        "visit",
+        "collaboration"
+      ],
+      "default": "visit",
+      "description": "Whether this is a fan visit request or an organizer collaboration request"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "unread",
+        "read"
+      ],
+      "default": "unread",
+      "description": "Status of the request"
+    },
+    "description": {
+      "type": "string",
+      "description": "Optional message or details from the requester",
+      "maxLength": 1000
+    }
+  },
+  "required": [
+    "artist_id",
+    "fan_user_id",
+    "city"
+  ]
+}
