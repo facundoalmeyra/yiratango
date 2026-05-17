@@ -3,6 +3,7 @@ import Logo from '@/components/ui/Logo';
 import { createPageUrl } from '@/utils';
 import LanguageSwitcher from '@/components/map/LanguageSwitcher';
 import { useI18n } from '@/components/contexts/I18nContext';
+import { useAuth } from '@/lib/AuthContext';
 import { ChevronDown, ChevronUp, Check } from 'lucide-react';
 import SEO from '@/components/seo/SEO';
 
@@ -37,6 +38,7 @@ export default function ArtistsLanding() {
   const [showNav, setShowNav] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const { lang } = useI18n();
+  const { navigateToLogin } = useAuth();
   const isEn = lang === 'en';
 
   useEffect(() => {
@@ -60,7 +62,7 @@ export default function ArtistsLanding() {
 
 const handleAuth = (e) => {
   e.preventDefault();
-  window.location.href = '/login';
+  navigateToLogin();
 };
 
   const faqData = isEn ? [

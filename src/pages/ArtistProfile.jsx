@@ -8,4 +8,4 @@ export default function ArtistProfile() {
   const p = searchParams.get('p') || searchParams.get('slug') || searchParams.get('id');
 
   return <ArtistProfileContent artistIdOrSlug={p} />;
-}
+}A

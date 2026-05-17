@@ -36,8 +36,13 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const navigateToLogin = () => {
-    window.location.href = '/login';
+  const navigateToLogin = async () => {
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.href
+      }
+    });
   };
 
   const checkAppState = () => {};
