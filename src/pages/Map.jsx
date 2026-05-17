@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/api/supabaseClient';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, ChevronDown, X, Filter, Menu, Check } from 'lucide-react';
@@ -147,7 +147,7 @@ export default function Map() {
   useEffect(() => {
     const loadUser = async () => {
       try {
-        const currentUser = await base44.auth.me();
+        const { data: { user: currentUser } } = await supabase.auth.getUser();
         setUser(currentUser);
       } catch (err) {
         setUser(null);
@@ -163,7 +163,10 @@ export default function Map() {
 
   const { data: fans = [], isLoading: loadingFans, isRefetching: refetchingFans } = useQuery({
     queryKey: ['fans_check', user?.email || user?.id],
-    queryFn: () => base44.entities.Fan.filter({ user_id: user?.email || user?.id }),
+    queryFn: async () => {
+  const { data } = await supabase.from('fans').select('*').eq('user_id', user?.email || user?.id);
+  return data || [];
+},
     enabled: !!user,
   });
 
@@ -193,7 +196,10 @@ export default function Map() {
 
   const { data: artists = [], isLoading: loadingArtists, isRefetching: refetchingArtists } = useQuery({
     queryKey: ['artists'],
-    queryFn: () => base44.entities.Artist.list(),
+    queryFn: async () => {
+  const { data } = await supabase.from('artists').select('*');
+  return data || [];
+},
     staleTime: 1000 * 60 * 5,
   });
 
@@ -240,7 +246,10 @@ export default function Map() {
 
   const { data: tours = [], isRefetching: refetchingTours } = useQuery({
     queryKey: ['tours'],
-    queryFn: () => base44.entities.Tour.list(),
+    queryFn: async () => {
+  const { data } = await supabase.from('tours').select('*');
+  return data || [];
+},
     staleTime: 1000 * 60 * 5,
   });
 
@@ -252,7 +261,10 @@ export default function Map() {
 
   const { data: unreadRequests = [] } = useQuery({
     queryKey: ['unread_visit_requests_map', calculatedProfile?.id],
-    queryFn: () => base44.entities.VisitRequest.filter({ artist_id: calculatedProfile.id, status: 'unread' }),
+    queryFn: async () => {
+  const { data } = await supabase.from('visit_requests').select('*').eq('artist_id', calculatedProfile.id).eq('status', 'unread');
+  return data || [];
+},
     enabled: !!calculatedProfile?.id,
   });
   const hasUnreadRequests = unreadRequests.length > 0;
