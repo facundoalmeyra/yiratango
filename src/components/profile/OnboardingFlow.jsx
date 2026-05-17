@@ -7,7 +7,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/api/supabaseClient';
 import { toast } from 'sonner';
 import CityAutocomplete from '@/components/location/CityAutocomplete';
 import { useQueryClient } from '@tanstack/react-query';
@@ -120,7 +120,6 @@ export default function OnboardingFlow({ user, onComplete, onSkip }) {
             const canvas = document.createElement('canvas');
             canvas.width = width;
             canvas.height = height;
-
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, width, height);
 
@@ -141,8 +140,17 @@ export default function OnboardingFlow({ user, onComplete, onSkip }) {
         reader.onerror = () => reject(new Error('File read failed'));
       });
 
-      const { file_url } = await base44.integrations.Core.UploadFile({ file: resizedFile });
-      updateFormData('avatar_url', file_url);
+      const fileName = `avatars/onboarding-${Date.now()}.webp`;
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, resizedFile, { upsert: true });
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(fileName);
+
+      updateFormData('avatar_url', publicUrl);
     } catch (err) {
       setImageError('Upload failed. Please try again.');
     } finally {
@@ -156,15 +164,11 @@ export default function OnboardingFlow({ user, onComplete, onSkip }) {
     const cleanUsername = (val, domain) => {
       if (!val) return '';
       let clean = val.trim();
-      
       if (domain === 'facebook.com' && clean.includes('profile.php?id=')) {
         const idMatch = clean.match(/id=([^&]+)/);
         if (idMatch) return `profile.php?id=${idMatch[1]}`;
       }
-      
-      if (clean.includes(domain)) {
-        clean = clean.split(domain)[1];
-      }
+      if (clean.includes(domain)) clean = clean.split(domain)[1];
       if (clean.startsWith('/')) clean = clean.substring(1);
       return clean.split('?')[0].replace(/\/$/, '');
     };
@@ -191,50 +195,42 @@ export default function OnboardingFlow({ user, onComplete, onSkip }) {
 
     setIsSaving(true);
     try {
-      const uId = user?.email || user?.id || 'unknown';
-      const newArtist = await base44.entities.Artist.create({
-        ...formData,
-        user_id: uId,
-        slug: generateSlug(formData.name, formData.partner_name, formData.profileType),
-        instagram_url: cleanUsername(formData.instagram_url, 'instagram.com'),
-        facebook_url: cleanUsername(formData.facebook_url, 'facebook.com'),
-        whatsapp_number: cleanWhatsapp(formData.whatsapp_number),
-        website_url: cleanWebsite(formData.website_url),
-        // Location is no longer set at onboarding — visibility is driven by tour dates
-        current_city: null,
-        current_latitude: null,
-        current_longitude: null,
-        last_checkin: null,
-      });
-      
+      const uId = user?.id;
+
+      const { data: newArtist, error } = await supabase
+        .from('artists')
+        .insert({
+          ...formData,
+          user_id: uId,
+          slug: generateSlug(formData.name, formData.partner_name, formData.profileType),
+          instagram_url: cleanUsername(formData.instagram_url, 'instagram.com'),
+          facebook_url: cleanUsername(formData.facebook_url, 'facebook.com'),
+          whatsapp_number: cleanWhatsapp(formData.whatsapp_number),
+          website_url: cleanWebsite(formData.website_url),
+          current_city: null,
+          current_latitude: null,
+          current_longitude: null,
+          last_checkin: null,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
       queryClient.setQueryData(['artists'], (old) => {
         if (!old) return [newArtist];
         return [...old, newArtist];
       });
-      
       queryClient.invalidateQueries({ queryKey: ['artists'] });
 
-      // Set user role to 'artist'
-      await base44.functions.invoke('updateUserRole', { role: 'artist' });
-
-      // Track AFTER successful DB write — this guarantees a real authenticated user with a real record
-      base44.analytics.track({
-        eventName: "artist_profile_created",
-        properties: {
-          category: formData.category,
-          profile_type: formData.profileType,
-          has_avatar: !!formData.avatar_url,
-          has_bio: !!formData.bio,
-          has_instagram: !!formData.instagram_url,
-        }
-      });
+      // Update user role in auth metadata
+      await supabase.auth.updateUser({ data: { role: 'artist' } });
 
       toast.success(lang === 'es' ? '¡Bienvenido/a a la comunidad de artistas de Yira Tango!' : 'Welcome to the Yira Tango Artists community!');
-      // Advance to the tour-dates reminder step instead of completing immediately
       setTimeout(() => setStep(4), 500);
     } catch (err) {
       console.error(err);
-      toast.error('Failed to create profile: ' + (err.response?.data?.message || err.message || 'Unknown error'));
+      toast.error('Failed to create profile: ' + (err.message || 'Unknown error'));
       setIsSaving(false);
     }
   };
@@ -243,11 +239,94 @@ export default function OnboardingFlow({ user, onComplete, onSkip }) {
     if (step === 1 && !formData.category) return toast.error(lang === 'es' ? 'Seleccioná un tipo' : 'Please select a type');
     if (step === 2 && !formData.name) return toast.error(lang === 'es' ? 'Ingresá tu nombre' : 'Please enter your name');
     if (step === 2 && formData.category === 'Maestro' && formData.profileType === 'Couple' && !formData.partner_name) return toast.error(lang === 'es' ? 'El nombre de tu pareja es requerido' : 'Partner name required');
-    
     setStep(s => Math.min(s + 1, totalSteps));
   };
 
   const prevStep = () => setStep(s => Math.max(s - 1, 0));
+
+  const handleFanSave = async () => {
+    if (!formData.city) return toast.error(lang === 'es' ? 'Seleccioná tu ciudad' : 'Please select your city');
+    try {
+      setIsSaving(true);
+      const uId = user?.id;
+
+      const { data: existing } = await supabase
+        .from('fans')
+        .select('id')
+        .eq('user_id', uId)
+        .maybeSingle();
+
+      if (!existing) {
+        const { error } = await supabase.from('fans').insert({
+          user_id: uId,
+          email: user?.email || '',
+          name: user?.full_name || 'Tango Fan',
+          avatar_url: user?.picture || user?.avatar_url || '',
+          role: 'fan',
+          role_type: 'fan',
+          city: `${formData.city}, ${formData.country}`
+        });
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('fans')
+          .update({ city: `${formData.city}, ${formData.country}`, role_type: 'fan' })
+          .eq('id', existing.id);
+        if (error) throw error;
+      }
+
+      await supabase.auth.updateUser({ data: { role: 'fan' } });
+      queryClient.invalidateQueries({ queryKey: ['fans_check'] });
+      sessionStorage.setItem('yira_show_fan_welcome', 'true');
+      onComplete({ isFan: true });
+    } catch (e) {
+      console.error(e);
+      toast.error('Failed to save profile: ' + (e.message || 'Unknown error'));
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleOrganizerSave = async () => {
+    if (!formData.city) return toast.error(lang === 'es' ? 'Seleccioná tu ciudad' : 'Please select your city');
+    try {
+      setIsSaving(true);
+      const uId = user?.id;
+
+      const { data: existing } = await supabase
+        .from('organizers')
+        .select('id')
+        .eq('user_id', uId)
+        .maybeSingle();
+
+      if (!existing) {
+        const { error } = await supabase.from('organizers').insert({
+          user_id: uId,
+          email: user?.email || '',
+          name: user?.full_name || 'Tango Organizer',
+          avatar_url: user?.picture || user?.avatar_url || '',
+          city: `${formData.city}, ${formData.country}`
+        });
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('organizers')
+          .update({ city: `${formData.city}, ${formData.country}` })
+          .eq('id', existing.id);
+        if (error) throw error;
+      }
+
+      await supabase.auth.updateUser({ data: { role: 'organizer' } });
+      queryClient.invalidateQueries({ queryKey: ['organizers_check'] });
+      sessionStorage.setItem('yira_show_fan_welcome', 'true');
+      onComplete({ isFan: true });
+    } catch (e) {
+      console.error(e);
+      toast.error('Failed to save profile: ' + (e.message || 'Unknown error'));
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <motion.div
@@ -255,7 +334,6 @@ export default function OnboardingFlow({ user, onComplete, onSkip }) {
       animate={{ opacity: 1 }}
       className="min-h-screen w-full flex items-center justify-center p-4 bg-black relative"
     >
-      {/* Logo - Left Side */}
       <div className="hidden lg:flex absolute left-8 top-8 z-50">
         <Logo width={64} height={33} className="text-white" />
       </div>
@@ -293,7 +371,6 @@ export default function OnboardingFlow({ user, onComplete, onSkip }) {
           </motion.div>
         ) : (
           <motion.div key="main" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="w-full max-w-md">
-        {/* Progress Dots */}
         {typeof step === 'number' && step > 0 && (
         <div className="flex justify-center gap-2 mb-8">
           {[1, 2, 3, 4].map(s => (
@@ -317,7 +394,6 @@ export default function OnboardingFlow({ user, onComplete, onSkip }) {
             </button>
           )}
 
-          {/* Exit Confirmation Modal */}
           <AnimatePresence>
             {showExitConfirm && (
               <motion.div
@@ -334,9 +410,7 @@ export default function OnboardingFlow({ user, onComplete, onSkip }) {
                 >
                   <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
                   <h3 className="text-xl font-bold text-white mb-2">{t('areYouSureExit')}</h3>
-                  <p className="text-white/80 text-sm mb-6">
-                    {t('ifYouLeaveLogOut')}
-                  </p>
+                  <p className="text-white/80 text-sm mb-6">{t('ifYouLeaveLogOut')}</p>
                   <div className="flex gap-3">
                     <Button 
                       variant="ghost" 
@@ -346,13 +420,7 @@ export default function OnboardingFlow({ user, onComplete, onSkip }) {
                       {t('cancel')}
                     </Button>
                     <Button 
-                      onClick={() => {
-                        base44.analytics.track({
-                          eventName: "onboarding_abandoned",
-                          properties: { step_abandoned: step }
-                        });
-                        onSkip();
-                      }}
+                      onClick={() => onSkip()}
                       className="flex-1 bg-red-500 hover:bg-red-600 text-white border-0"
                     >
                       {t('exit')}
@@ -362,6 +430,7 @@ export default function OnboardingFlow({ user, onComplete, onSkip }) {
               </motion.div>
             )}
           </AnimatePresence>
+
           <AnimatePresence mode="wait">
             
             {/* STEP 0: APP ROLE */}
@@ -411,7 +480,7 @@ export default function OnboardingFlow({ user, onComplete, onSkip }) {
               </motion.div>
             )}
 
-            {/* ORGANIZER LOCATION — same layout as FAN_LOCATION but sets role_type=organizer */}
+            {/* ORGANIZER LOCATION */}
             {step === 'ORGANIZER_LOCATION' && (
               <motion.div
                 key="stepOrganizerLocation"
@@ -423,13 +492,11 @@ export default function OnboardingFlow({ user, onComplete, onSkip }) {
                 <h2 className="text-2xl font-bold text-white mb-2 text-center">{t('whereLive')}</h2>
                 <p className="text-white/70 text-center mb-8 text-sm">{t('requiredToRequest')}</p>
                 <div className="space-y-4">
-                  <div className="relative group">
-                    <CityAutocomplete
-                      value={formData.city ? `${formData.city}${formData.country ? `, ${formData.country}` : ''}` : ''}
-                      onSelect={handleLocationSuccess}
-                      placeholder={t('enterCityLocation')}
-                    />
-                  </div>
+                  <CityAutocomplete
+                    value={formData.city ? `${formData.city}${formData.country ? `, ${formData.country}` : ''}` : ''}
+                    onSelect={handleLocationSuccess}
+                    placeholder={t('enterCityLocation')}
+                  />
                   {locationError && (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-2 justify-center text-red-400 text-sm mt-2">
                       <AlertCircle className="w-4 h-4" />
@@ -465,23 +532,18 @@ export default function OnboardingFlow({ user, onComplete, onSkip }) {
               >
                 <h2 className="text-2xl font-bold text-white mb-2 text-center">{t('whereLive')}</h2>
                 <p className="text-white/70 text-center mb-8 text-sm">{t('requiredToRequest')}</p>
-
                 <div className="space-y-4">
-                  <div className="relative group">
-                    <CityAutocomplete
-                      value={formData.city ? `${formData.city}${formData.country ? `, ${formData.country}` : ''}` : ''}
-                      onSelect={handleLocationSuccess}
-                      placeholder={t('enterCityLocation')}
-                    />
-                  </div>
-
+                  <CityAutocomplete
+                    value={formData.city ? `${formData.city}${formData.country ? `, ${formData.country}` : ''}` : ''}
+                    onSelect={handleLocationSuccess}
+                    placeholder={t('enterCityLocation')}
+                  />
                   {locationError && (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-2 justify-center text-red-400 text-sm mt-2">
                       <AlertCircle className="w-4 h-4" />
                       {locationError}
                     </motion.div>
                   )}
-
                   {formData.city && (
                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-6 p-4 bg-white/10 rounded-xl border border-white/20 flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-black">
@@ -491,10 +553,7 @@ export default function OnboardingFlow({ user, onComplete, onSkip }) {
                         <p className="text-white text-xs font-bold uppercase tracking-wide">{t('selectedLocation')}</p>
                         <p className="text-white font-medium">{formData.city}, {formData.country}</p>
                       </div>
-                      <button 
-                        onClick={() => updateFormData('city', '')}
-                        className="ml-auto p-2 hover:bg-white/10 rounded-full text-white/70 hover:text-white"
-                      >
+                      <button onClick={() => updateFormData('city', '')} className="ml-auto p-2 hover:bg-white/10 rounded-full text-white/70 hover:text-white">
                         <X className="w-4 h-4" />
                       </button>
                     </motion.div>
@@ -502,8 +561,6 @@ export default function OnboardingFlow({ user, onComplete, onSkip }) {
                 </div>
               </motion.div>
             )}
-
-
 
             {/* STEP 1: CATEGORY */}
             {step === 1 && (
@@ -516,7 +573,6 @@ export default function OnboardingFlow({ user, onComplete, onSkip }) {
               >
                 <h2 className="text-2xl font-bold text-white mb-2 text-center">{t('whatIsRole')}</h2>
                 <p className="text-white/70 text-center mb-8 text-sm">{t('selectArtistType')}</p>
-
                 <div className="space-y-4">
                   {[
                     { id: 'Maestro', label: t('maestroOrCouple') },
@@ -552,7 +608,6 @@ export default function OnboardingFlow({ user, onComplete, onSkip }) {
                 <p className="text-white/70 text-center mb-8 text-sm">{t('tellUsAppear')}</p>
 
                 <div className="space-y-6">
-                  {/* Photo Upload - Circle with Pencil */}
                   <div className="flex justify-center mb-6">
                     <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
                       <div className="w-32 h-32 rounded-full overflow-hidden border-2 border-white/20 bg-[#111111] flex items-center justify-center relative">
@@ -563,9 +618,7 @@ export default function OnboardingFlow({ user, onComplete, onSkip }) {
                         )}
                         {formData.avatar_url ? (
                           <>
-                            {!avatarLoaded && (
-                              <div className="absolute inset-0 skeleton-shimmer z-0" />
-                            )}
+                            {!avatarLoaded && <div className="absolute inset-0 skeleton-shimmer z-0" />}
                             <img 
                               src={formData.avatar_url} 
                               alt="Profile" 
@@ -579,16 +632,9 @@ export default function OnboardingFlow({ user, onComplete, onSkip }) {
                           </span>
                         )}
                       </div>
-                      
-                      {/* Pencil Overlay */}
                       <div className="absolute bottom-1 right-1 z-50 p-3 bg-white rounded-full shadow-lg border-4 border-[#1A1A1A] group-hover:bg-gray-200 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center">
-                        {uploadingImage ? (
-                          <Loader2 className="w-4 h-4 animate-spin text-black" />
-                        ) : (
-                          <Pencil className="w-4 h-4 text-black" />
-                        )}
+                        {uploadingImage ? <Loader2 className="w-4 h-4 animate-spin text-black" /> : <Pencil className="w-4 h-4 text-black" />}
                       </div>
-
                       <input
                         ref={fileInputRef}
                         type="file"
@@ -601,7 +647,6 @@ export default function OnboardingFlow({ user, onComplete, onSkip }) {
                     </div>
                   </div>
 
-                  {/* Profile Type Toggle — Maestro: Solo / Couple */}
                   {formData.category === 'Maestro' && (
                     <div className="bg-white/5 p-1 rounded-full flex mb-6">
                       {[{ id: 'Solo', labelKey: 'soloLabel' }, { id: 'Couple', labelKey: 'coupleLabel' }].map(type => (
@@ -609,9 +654,7 @@ export default function OnboardingFlow({ user, onComplete, onSkip }) {
                           key={type.id}
                           onClick={() => updateFormData('profileType', type.id)}
                           className={`flex-1 py-2 text-sm font-medium rounded-full transition-all ${
-                            formData.profileType === type.id 
-                              ? 'bg-white text-black shadow-lg' 
-                              : 'text-white/70 hover:text-white'
+                            formData.profileType === type.id ? 'bg-white text-black shadow-lg' : 'text-white/70 hover:text-white'
                           }`}
                         >
                           {t(type.labelKey)}
@@ -620,7 +663,6 @@ export default function OnboardingFlow({ user, onComplete, onSkip }) {
                     </div>
                   )}
 
-                  {/* Category Toggle — Musician / Orchestra */}
                   {(formData.category === 'Musician' || formData.category === 'Orchestra') && (
                     <div className="bg-white/5 p-1 rounded-full flex mb-6">
                       {[{ id: 'Musician', labelKey: 'musicianLabel' }, { id: 'Orchestra', labelKey: 'orchestraLabel' }].map(type => (
@@ -628,9 +670,7 @@ export default function OnboardingFlow({ user, onComplete, onSkip }) {
                           key={type.id}
                           onClick={() => updateFormData('category', type.id)}
                           className={`flex-1 py-2 text-sm font-medium rounded-full transition-all ${
-                            formData.category === type.id
-                              ? 'bg-white text-black shadow-lg'
-                              : 'text-white/70 hover:text-white'
+                            formData.category === type.id ? 'bg-white text-black shadow-lg' : 'text-white/70 hover:text-white'
                           }`}
                         >
                           {t(type.labelKey)}
@@ -652,7 +692,6 @@ export default function OnboardingFlow({ user, onComplete, onSkip }) {
                         autoFocus
                       />
                     </div>
-
                     {formData.category === 'Maestro' && formData.profileType === 'Couple' && (
                       <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}>
                         <label className="text-xs font-medium text-white/80 uppercase tracking-wider mb-1.5 block">
@@ -682,7 +721,6 @@ export default function OnboardingFlow({ user, onComplete, onSkip }) {
               >
                 <h2 className="text-2xl font-bold text-white mb-2 text-center">{t('finalTouches')}</h2>
                 <p className="text-white/70 text-center mb-8 text-sm">{t('addPhotoSocials')}</p>
-
                 <div className="space-y-4">
                   <div>
                     <div className="flex justify-between mb-1.5">
@@ -699,62 +737,32 @@ export default function OnboardingFlow({ user, onComplete, onSkip }) {
                       maxLength={150}
                     />
                   </div>
-                  
                   <div className="grid grid-cols-1 gap-3">
-                    <div className="flex bg-white/5 border border-white/10 rounded-md overflow-hidden focus-within:border-white/50">
-                      <span className="flex items-center pl-3 pr-2 text-white/80 bg-white/5 border-r border-white/10 text-sm gap-2">
-                        <Instagram className="w-4 h-4 text-white/70" />
-                        <span>instagram.com/</span>
-                      </span>
-                      <Input
-                        value={formData.instagram_url || ''}
-                        onChange={e => updateFormData('instagram_url', e.target.value)}
-                        placeholder="username"
-                        className="bg-transparent border-0 text-white rounded-none focus-visible:ring-0 shadow-none h-10"
-                      />
-                    </div>
-                    <div className="flex bg-white/5 border border-white/10 rounded-md overflow-hidden focus-within:border-white/50">
-                      <span className="flex items-center pl-3 pr-2 text-white/80 bg-white/5 border-r border-white/10 text-sm gap-2">
-                        <Facebook className="w-4 h-4 text-white/70" />
-                        <span>facebook.com/</span>
-                      </span>
-                      <Input
-                        value={formData.facebook_url || ''}
-                        onChange={e => updateFormData('facebook_url', e.target.value)}
-                        placeholder="username"
-                        className="bg-transparent border-0 text-white rounded-none focus-visible:ring-0 shadow-none h-10"
-                      />
-                    </div>
-                    <div className="flex bg-white/5 border border-white/10 rounded-md overflow-hidden focus-within:border-white/50">
-                      <span className="flex items-center pl-3 pr-2 text-white/80 bg-white/5 border-r border-white/10 text-sm gap-2">
-                        <MessageCircle className="w-4 h-4 text-white/70" />
-                        <span>wa.me/</span>
-                      </span>
-                      <Input
-                        value={formData.whatsapp_number || ''}
-                        onChange={e => updateFormData('whatsapp_number', e.target.value)}
-                        placeholder="1234567890"
-                        className="bg-transparent border-0 text-white rounded-none focus-visible:ring-0 shadow-none h-10"
-                      />
-                    </div>
-                    <div className="flex bg-white/5 border border-white/10 rounded-md overflow-hidden focus-within:border-white/50">
-                      <span className="flex items-center pl-3 pr-2 text-white/80 bg-white/5 border-r border-white/10 text-sm gap-2">
-                        <Globe className="w-4 h-4 text-white/70" />
-                        <span>https://</span>
-                      </span>
-                      <Input
-                        value={formData.website_url || ''}
-                        onChange={e => updateFormData('website_url', e.target.value)}
-                        placeholder="website.com"
-                        className="bg-transparent border-0 text-white rounded-none focus-visible:ring-0 shadow-none h-10"
-                      />
-                    </div>
+                    {[
+                      { icon: Instagram, prefix: 'instagram.com/', key: 'instagram_url', placeholder: 'username' },
+                      { icon: Facebook, prefix: 'facebook.com/', key: 'facebook_url', placeholder: 'username' },
+                      { icon: MessageCircle, prefix: 'wa.me/', key: 'whatsapp_number', placeholder: '1234567890' },
+                      { icon: Globe, prefix: 'https://', key: 'website_url', placeholder: 'website.com' },
+                    ].map(({ icon: Icon, prefix, key, placeholder }) => (
+                      <div key={key} className="flex bg-white/5 border border-white/10 rounded-md overflow-hidden focus-within:border-white/50">
+                        <span className="flex items-center pl-3 pr-2 text-white/80 bg-white/5 border-r border-white/10 text-sm gap-2">
+                          <Icon className="w-4 h-4 text-white/70" />
+                          <span>{prefix}</span>
+                        </span>
+                        <Input
+                          value={formData[key] || ''}
+                          onChange={e => updateFormData(key, e.target.value)}
+                          placeholder={placeholder}
+                          className="bg-transparent border-0 text-white rounded-none focus-visible:ring-0 shadow-none h-10"
+                        />
+                      </div>
+                    ))}
                   </div>
                 </div>
               </motion.div>
             )}
 
-            {/* STEP 4: ADD TOUR DATES — Urgency warning */}
+            {/* STEP 4: ADD TOUR DATES */}
             {step === 4 && (
               <motion.div
                 key="step4-dates"
@@ -763,7 +771,6 @@ export default function OnboardingFlow({ user, onComplete, onSkip }) {
                 exit={{ opacity: 0, x: -20 }}
                 className="p-8"
               >
-                {/* Alert banner — same visual language as the ProfileSettings banner */}
                 <div className="flex items-start gap-3 bg-white/5 border border-white/20 rounded-xl p-4 mb-6">
                   <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
                     <Calendar className="w-5 h-5 text-black" />
@@ -789,12 +796,8 @@ export default function OnboardingFlow({ user, onComplete, onSkip }) {
             ) : (
               <div></div>
             )}
-
             {step < 3 ? (
-              <Button 
-                onClick={nextStep} 
-                className="bg-white text-black hover:bg-gray-200 px-8 rounded-full font-bold"
-              >
+              <Button onClick={nextStep} className="bg-white text-black hover:bg-gray-200 px-8 rounded-full font-bold">
                 {t('next')} <ChevronRight className="w-4 h-4 ml-1" />
               </Button>
             ) : step === 3 ? (
@@ -806,7 +809,6 @@ export default function OnboardingFlow({ user, onComplete, onSkip }) {
                 {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <><span>{t('finish')}</span> <ChevronRight className="w-4 h-4 ml-1" /></>}
               </Button>
             ) : (
-              // Step 4: redirect to profile-settings to add tour dates
               <Button 
                 onClick={() => onComplete({ isFan: false })}
                 className="bg-white text-black hover:bg-white/90 px-8 rounded-full font-bold"
@@ -823,44 +825,7 @@ export default function OnboardingFlow({ user, onComplete, onSkip }) {
                 <ChevronLeft className="w-4 h-4 mr-1" /> {t('back')}
               </Button>
               <Button 
-                onClick={async () => {
-                  if (!formData.city) return toast.error(lang === 'es' ? 'Seleccioná tu ciudad' : 'Please select your city');
-                  try {
-                    setIsSaving(true);
-                    const uId = user?.email || user?.id || 'unknown';
-                    const existingFans = await base44.entities.Fan.filter({ user_id: uId });
-                    if (existingFans.length === 0) {
-                      await base44.entities.Fan.create({
-                        user_id: uId,
-                        email: user?.email || `${user?.id || 'fb'}@no-email.com`,
-                        name: user?.full_name || 'Tango Fan',
-                        avatar_url: user?.picture || user?.avatar_url || '',
-                        role: 'fan',
-                        role_type: 'fan',
-                        city: `${formData.city}, ${formData.country}`
-                      });
-                      base44.analytics.track({
-                        eventName: "fan_profile_created",
-                        properties: { city: formData.city, country: formData.country }
-                      });
-                    } else {
-                      await base44.entities.Fan.update(existingFans[0].id, {
-                        city: `${formData.city}, ${formData.country}`,
-                        role_type: 'fan'
-                      });
-                    }
-                    queryClient.invalidateQueries({ queryKey: ['fans_check'] });
-                    // Set user role to 'fan'
-                    await base44.functions.invoke('updateUserRole', { role: 'fan' });
-                    sessionStorage.setItem('yira_show_fan_welcome', 'true');
-                    onComplete({ isFan: true });
-                  } catch (e) {
-                    console.error(e);
-                    toast.error('Failed to save profile: ' + (e.response?.data?.message || e.message || 'Unknown error'));
-                  } finally {
-                    setIsSaving(false);
-                  }
-                }}
+                onClick={handleFanSave}
                 disabled={isSaving}
                 className="bg-white text-black hover:bg-gray-200 px-8 rounded-full font-bold"
               >
@@ -875,41 +840,7 @@ export default function OnboardingFlow({ user, onComplete, onSkip }) {
                 <ChevronLeft className="w-4 h-4 mr-1" /> {t('back')}
               </Button>
               <Button
-                onClick={async () => {
-                  if (!formData.city) return toast.error(lang === 'es' ? 'Seleccioná tu ciudad' : 'Please select your city');
-                  try {
-                    setIsSaving(true);
-                    const uId = user?.email || user?.id || 'unknown';
-                    const existingOrganizers = await base44.entities.Organizer.filter({ user_id: uId });
-                    if (existingOrganizers.length === 0) {
-                      await base44.entities.Organizer.create({
-                        user_id: uId,
-                        email: user?.email || `${user?.id || 'fb'}@no-email.com`,
-                        name: user?.full_name || 'Tango Organizer',
-                        avatar_url: user?.picture || user?.avatar_url || '',
-                        city: `${formData.city}, ${formData.country}`
-                      });
-                      base44.analytics.track({
-                        eventName: "organizer_profile_created",
-                        properties: { city: formData.city, country: formData.country }
-                      });
-                    } else {
-                      await base44.entities.Organizer.update(existingOrganizers[0].id, {
-                        city: `${formData.city}, ${formData.country}`
-                      });
-                    }
-                    queryClient.invalidateQueries({ queryKey: ['organizers_check'] });
-                    // Set user role to 'organizer'
-                    await base44.functions.invoke('updateUserRole', { role: 'organizer' });
-                    sessionStorage.setItem('yira_show_fan_welcome', 'true');
-                    onComplete({ isFan: true });
-                  } catch (e) {
-                    console.error(e);
-                    toast.error('Failed to save profile: ' + (e.response?.data?.message || e.message || 'Unknown error'));
-                  } finally {
-                    setIsSaving(false);
-                  }
-                }}
+                onClick={handleOrganizerSave}
                 disabled={isSaving}
                 className="bg-white text-black hover:bg-gray-200 px-8 rounded-full font-bold"
               >
