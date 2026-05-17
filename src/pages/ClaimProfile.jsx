@@ -62,12 +62,7 @@ export default function ClaimProfile() {
   };
 
   const handleLogin = async () => {
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}${window.location.pathname}?code=${code}`
-      }
-    });
+    window.location.href = '/onboarding';
   };
 
   const handleClaim = async () => {

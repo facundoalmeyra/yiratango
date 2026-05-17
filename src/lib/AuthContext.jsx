@@ -22,6 +22,11 @@ export const AuthProvider = ({ children }) => {
       setUser(session?.user ?? null);
       setIsAuthenticated(!!session?.user);
       setIsLoadingAuth(false);
+
+      // Solo redirige si viene del callback de Google
+      if (_event === 'SIGNED_IN' && session && window.location.hash.includes('access_token')) {
+        window.location.replace('/Map');
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -36,13 +41,8 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const navigateToLogin = async () => {
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: window.location.href
-      }
-    });
+  const navigateToLogin = () => {
+    window.location.href = '/onboarding';
   };
 
   const checkAppState = () => {};

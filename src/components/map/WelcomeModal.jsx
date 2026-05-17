@@ -34,12 +34,7 @@ export default function WelcomeModal() {
 
   const handleLogin = async () => {
     sessionStorage.setItem(SESSION_KEY, '1');
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: window.location.href
-      }
-    });
+    window.location.href = '/onboarding';
   };
 
   return (
