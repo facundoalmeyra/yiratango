@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Menu, MapPin, Heart, User as UserIcon } from 'lucide-react';
 import { createPageUrl } from '@/utils';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/api/supabaseClient';
 import { useI18n } from '@/components/contexts/I18nContext';
 import LanguageSwitcher from '@/components/map/LanguageSwitcher';
 import NotificationBell from '@/components/notifications/NotificationBell';
@@ -47,7 +47,7 @@ export default function UserMenu({
             <DropdownMenuContent align="end" className="w-56 bg-[#111111] text-white border-white/10 z-[60]">
               <DropdownMenuLabel>
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">{calculatedProfile?.name || user?.full_name}</p>
+                  <p className="text-sm font-medium leading-none">{calculatedProfile?.name || user?.user_metadata?.full_name}</p>
                   <p className="text-xs leading-none text-white/70">{calculatedProfile?.slug ? `@${calculatedProfile.slug}` : user?.email}</p>
                 </div>
               </DropdownMenuLabel>
@@ -96,7 +96,7 @@ export default function UserMenu({
               <DropdownMenuSeparator className="bg-white/10" />
               <DropdownMenuItem 
                 onClick={async () => {
-                  await base44.auth.logout();
+                  await supabase.auth.signOut();
                   window.location.reload();
                 }}
                 className="cursor-pointer text-white hover:bg-white/10 focus:bg-white/10 focus:text-white"
@@ -112,7 +112,7 @@ export default function UserMenu({
             <button
               onClick={(e) => {
                 e.preventDefault();
-                base44.auth.redirectToLogin(window.location.origin + createPageUrl('Onboarding'));
+                window.location.href = '/login';
               }}
               className="flex items-center justify-center px-4 h-8 rounded-full text-white hover:bg-white/10 transition-all font-medium text-xs pointer-events-auto cursor-pointer whitespace-nowrap flex-shrink-0"
             >
@@ -121,7 +121,7 @@ export default function UserMenu({
             <button
               onClick={(e) => {
                 e.preventDefault();
-                base44.auth.redirectToLogin(window.location.origin + createPageUrl('Onboarding'));
+                window.location.href = '/login';
               }}
               className="flex items-center justify-center px-4 h-8 rounded-full bg-white text-black hover:bg-white/90 transition-all font-medium text-xs shadow-lg pointer-events-auto cursor-pointer whitespace-nowrap flex-shrink-0"
             >
