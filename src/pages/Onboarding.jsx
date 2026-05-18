@@ -10,7 +10,7 @@ import SEO from '@/components/seo/SEO';
 
 export default function Onboarding() {
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(/** @type {import('@supabase/supabase-js').User|null} */ (null));
   const [loadingUser, setLoadingUser] = useState(true);
   const trackedRef = useRef(false);
   // Prevent redirect-to-Map when artist profile was just created in this session
@@ -45,9 +45,9 @@ export default function Onboarding() {
   });
 
   const { data: fans = [], isLoading: loadingFans } = useQuery({
-    queryKey: ['fans_check', user?.email || user?.id],
+    queryKey: ['fans_check', user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase.from('fans').select('*').eq('user_id', user?.email || user?.id);
+      const { data, error } = await supabase.from('fans').select('*').eq('user_id', user?.id);
       if (error) throw error;
       return data || [];
     },
@@ -55,9 +55,9 @@ export default function Onboarding() {
   });
 
   const { data: organizers = [], isLoading: loadingOrganizers } = useQuery({
-    queryKey: ['organizers_check', user?.email || user?.id],
+    queryKey: ['organizers_check', user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase.from('organizers').select('*').eq('user_id', user?.email || user?.id);
+      const { data, error } = await supabase.from('organizers').select('*').eq('user_id', user?.id);
       if (error) throw error;
       return data || [];
     },

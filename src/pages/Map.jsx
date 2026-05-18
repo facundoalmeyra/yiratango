@@ -162,11 +162,11 @@ export default function Map() {
   const queryClient = useQueryClient();
 
   const { data: fans = [], isLoading: loadingFans, isRefetching: refetchingFans } = useQuery({
-    queryKey: ['fans_check', user?.email || user?.id],
+    queryKey: ['fans_check', user?.id],
     queryFn: async () => {
-  const { data } = await supabase.from('fans').select('*').eq('user_id', user?.email || user?.id);
-  return data || [];
-},
+      const { data } = await supabase.from('fans').select('*').eq('user_id', user?.id);
+      return data || [];
+    },
     enabled: !!user,
   });
 
