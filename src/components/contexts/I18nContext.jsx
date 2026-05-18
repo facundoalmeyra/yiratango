@@ -35,7 +35,6 @@ export function I18nProvider({ children }) {
   }, [location.pathname, lang, navigate]);
 
   const changeLang = (newLang) => {
-    setLang(newLang);
     localStorage.setItem('yira_lang', newLang);
     const path = location.pathname;
     const match = path.match(/^\/(en|es)(\/|$)/);
