@@ -3,6 +3,9 @@ import { supabase } from '@/api/supabaseClient';
 import { createPageUrl } from '@/utils';
 import { useI18n } from '@/components/contexts/I18nContext';
 import { Loader2 } from 'lucide-react';
+import Logo from '@/components/ui/Logo';
+import LanguageSwitcher from '@/components/map/LanguageSwitcher';
+import TabBar from '@/components/ui/TabBar';
 
 const GoogleIcon = () => (
   <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
@@ -101,31 +104,29 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-black flex flex-col items-center justify-center px-4 py-8">
-      <div className="max-w-sm w-full">
+      <div className="fixed top-4 right-4 z-50">
+        <LanguageSwitcher />
+      </div>
 
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-white tracking-tight">YIRA</h1>
-          <p className="text-white/40 text-sm mt-1">Tango</p>
+      <div className="max-w-sm w-full">
+        <div className="flex justify-center mb-8">
+          <Logo width={140} height={56} className="" style={{}} />
         </div>
 
         <div className="bg-[#0f0f0f] border border-white/10 rounded-2xl p-6">
 
           {/* Mode toggle (signin / signup) */}
           {mode !== 'forgot' && (
-            <div className="flex mb-6 bg-white/5 rounded-full p-1">
-              <button
-                onClick={() => switchMode('signin')}
-                className={`flex-1 py-2 text-sm font-medium rounded-full transition-all ${mode === 'signin' ? 'bg-white text-black' : 'text-white/50 hover:text-white'}`}
-              >
-                {t('signIn')}
-              </button>
-              <button
-                onClick={() => switchMode('signup')}
-                className={`flex-1 py-2 text-sm font-medium rounded-full transition-all ${mode === 'signup' ? 'bg-white text-black' : 'text-white/50 hover:text-white'}`}
-              >
-                {t('signUp')}
-              </button>
-            </div>
+            <TabBar
+              className="mb-6"
+              layoutId="loginModeTab"
+              activeTab={mode}
+              onChange={(key) => switchMode(/** @type {'signin'|'signup'} */ (key))}
+              tabs={[
+                { key: 'signin', label: t('signIn') },
+                { key: 'signup', label: t('signUp') },
+              ]}
+            />
           )}
 
           {/* Forgot password header */}
