@@ -204,6 +204,7 @@ export default function OnboardingFlow({ user, onComplete, onSkip }) {
         .insert({
           ...artistData,
           user_id: uId,
+          created_by: user?.email,
           slug: generateSlug(formData.name, formData.partner_name, formData.profileType),
           instagram_url: cleanUsername(formData.instagram_url, 'instagram.com'),
           facebook_url: cleanUsername(formData.facebook_url, 'facebook.com'),
@@ -318,8 +319,25 @@ export default function OnboardingFlow({ user, onComplete, onSkip }) {
         if (error) throw error;
       }
 
+      // Also upsert into fans table with role_type=organizer so FanProfile and Map can detect it
+      const { data: existingFan } = await supabase.from('fans').select('id').eq('user_id', uId).maybeSingle();
+      if (!existingFan) {
+        await supabase.from('fans').insert({
+          user_id: uId,
+          email: user?.email || '',
+          name: user?.full_name || 'Tango Organizer',
+          avatar_url: user?.picture || user?.avatar_url || '',
+          role: 'organizer',
+          role_type: 'organizer',
+          city: `${formData.city}, ${formData.country}`
+        });
+      } else {
+        await supabase.from('fans').update({ role_type: 'organizer' }).eq('id', existingFan.id);
+      }
+
       await supabase.auth.updateUser({ data: { role: 'organizer' } });
       queryClient.invalidateQueries({ queryKey: ['organizers_check'] });
+      queryClient.invalidateQueries({ queryKey: ['fans_check'] });
       sessionStorage.setItem('yira_show_fan_welcome', 'true');
       onComplete({ isFan: true });
     } catch (e) {

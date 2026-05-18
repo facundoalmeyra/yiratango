@@ -271,7 +271,7 @@ export default function FanProfile() {
   const { t } = useI18n();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(/** @type {import('@supabase/supabase-js').User|null} */ (null));
   const [loadingUser, setLoadingUser] = useState(true);
   const [activeTab, setActiveTab] = useState(() => {
     const params = new URLSearchParams(window.location.search);
@@ -332,7 +332,7 @@ export default function FanProfile() {
   const deleteFanMutation = useMutation({
     mutationFn: async () => {
       const email = user.email;
-      await supabase.from('fans').delete().eq('user_id', email);
+      await supabase.from('fans').delete().eq('user_id', user?.id);
       await supabase.from('follows').delete().eq('fan_user_id', email);
       await supabase.from('visit_requests').delete().eq('fan_user_id', email);
       await supabase.from('notifications').delete().eq('fan_user_id', email);
@@ -398,7 +398,7 @@ export default function FanProfile() {
         <section className="mb-6 md:mb-8 flex flex-col md:flex-row items-center md:items-start gap-4 md:gap-8 pt-4">
           <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="relative group flex-shrink-0">
             <div className="relative z-10 w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-[#1A1A1A] shadow-2xl bg-[#111111] transition-all duration-300 ring-1 ring-white/10">
-              <UserAvatar user={{ ...user, avatar_url: displayAvatar, full_name: displayName }} size="full" className="w-full h-full text-4xl text-white bg-transparent" />
+              <UserAvatar user={{ ...user, avatar_url: displayAvatar, full_name: displayName }} artistProfile={null} size="full" className="w-full h-full text-4xl text-white bg-transparent" />
             </div>
           </motion.div>
 

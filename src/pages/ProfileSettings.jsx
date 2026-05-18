@@ -118,7 +118,7 @@ export default function ProfileSettings() {
       await supabase.from('follows').delete().eq('artist_id', id);
       await supabase.from('notifications').delete().eq('artist_id', id);
       await supabase.from('artists').delete().eq('id', id);
-      await supabase.from('fans').delete().eq('user_id', email);
+      await supabase.from('fans').delete().eq('user_id', user.id);
       await supabase.from('follows').delete().eq('fan_user_id', email);
       await supabase.from('visit_requests').delete().eq('fan_user_id', email);
       await supabase.from('notifications').delete().eq('fan_user_id', email);
