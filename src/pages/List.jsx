@@ -211,9 +211,9 @@ export default function List() {
   });
 
   const { data: fans = [], isLoading: loadingFans, isRefetching: refetchingFans } = useQuery({
-    queryKey: ['fans_check', user?.email || user?.id],
+    queryKey: ['fans_check', user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase.from('fans').select('*').eq('user_id', user?.email || user?.id);
+      const { data, error } = await supabase.from('fans').select('*').eq('user_id', user?.id);
       if (error) throw error;
       return data || [];
     },

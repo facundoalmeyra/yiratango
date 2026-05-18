@@ -291,9 +291,9 @@ export default function FanProfile() {
   });
 
   const { data: fans = [], isLoading: loadingFans } = useQuery({
-    queryKey: ['fans', user?.email],
-    queryFn: async () => { const { data } = await supabase.from('fans').select('*').eq('user_id', user?.email); return data || []; },
-    enabled: !!user?.email,
+    queryKey: ['fans', user?.id],
+    queryFn: async () => { const { data } = await supabase.from('fans').select('*').eq('user_id', user?.id); return data || []; },
+    enabled: !!user?.id,
   });
 
   const { data: follows = [], isLoading: loadingFollows } = useQuery({
