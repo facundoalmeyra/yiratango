@@ -194,12 +194,10 @@ export const translations = {
 
     // ProfileSettings modals
     updateLocationTitle: "Update Location",
-    searchCity: "Search city...",
     cancelBtn: "Cancel",
     updateBtn: "Update",
     removeDateTitle: "Remove Date?",
     removeDateDesc: "This will remove the event in",
-    removeDateDesc2: "from your tour schedule.",
     removeBtn: "Remove",
 
     // ArtistVisitRequests
@@ -210,7 +208,6 @@ export const translations = {
     deleteAllDesc: "Are you sure you want to delete all requests? This action cannot be undone.",
     confirmBtn: "Confirm",
     noVisitRequests: "No visit requests yet. When fans ask you to visit their city, they'll appear here.",
-    requested: "Requested",
 
     // ProfileSettings misc
     viewProfile: "View Profile",
@@ -296,6 +293,25 @@ export const translations = {
     passwordChanged: "Password changed successfully",
     passwordChangeFailed: "Failed to change password. Check your current password.",
     passwordsDoNotMatch: "Passwords do not match",
+
+    // Login
+    signIn: "Sign In",
+    signUp: "Create Account",
+    emailPlaceholder: "your@email.com",
+    passwordPlaceholder: "Password",
+    confirmPasswordPlaceholder: "Confirm Password",
+    forgotPassword: "Forgot password?",
+    sendResetEmail: "Send Reset Email",
+    resetEmailSent: "Check your email for a password reset link.",
+    orContinueWith: "or continue with",
+    signInWithGoogle: "Continue with Google",
+    signInWithFacebook: "Continue with Facebook",
+    signInWithApple: "Continue with Apple",
+    backToLogin: "Back to login",
+    checkEmailConfirm: "Account created! Check your email to confirm before signing in.",
+    invalidEmail: "Please enter a valid email address",
+    loginError: "Something went wrong. Please try again.",
+    passwordTooShort: "Password must be at least 6 characters",
 
     // Claim Profile
     claimTitle: "Claim your artist profile",
@@ -511,7 +527,6 @@ export const translations = {
     updateBtn: "Actualizar",
     removeDateTitle: "¿Eliminar fecha?",
     removeDateDesc: "Esto va a eliminar el evento en",
-    removeDateDesc2: "de tu agenda de giras.",
     removeBtn: "Eliminar",
 
     // ArtistVisitRequests
@@ -522,7 +537,6 @@ export const translations = {
     deleteAllDesc: "¿Estás seguro/a de que querés borrar todas las solicitudes? Esta acción no se puede deshacer.",
     confirmBtn: "Confirmar",
     noVisitRequests: "Todavía no hay solicitudes de visita. Cuando los fans te pidan que vayas a su ciudad, van a aparecer acá.",
-    requested: "Solicitado",
 
     // ProfileSettings misc
     viewProfile: "Ver Perfil",

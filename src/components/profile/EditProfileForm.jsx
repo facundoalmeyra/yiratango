@@ -27,7 +27,7 @@ const EditProfileForm = memo(forwardRef(function EditProfileForm({
   const fileInputRef = React.useRef(null);
 
   const { data: allArtists = [] } = useQuery({
-    queryKey: ['artists'],
+    queryKey: ['artists_slugs'],
     queryFn: async () => {
       const { data, error } = await supabase.from('artists').select('id, slug');
       if (error) throw error;
