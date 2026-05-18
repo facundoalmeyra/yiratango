@@ -1,6 +1,6 @@
 import React, { useRef, useMemo, useState, useEffect } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { OrbitControls, Html } from '@react-three/drei';
+import { OrbitControls, Html, Line } from '@react-three/drei';
 import * as THREE from 'three';
 import { isTourActive, isTourOngoing, getArtistState } from '@/components/utils/tourUtils';
 import StatusAvatar from '@/components/profile/StatusAvatar';
@@ -25,7 +25,20 @@ function latLngToVector3(lat, lng, radius) {
 // Country borders from GeoJSON
 function CountryBorders({ activeContinent, activeCountry }) {
   const [borders, setBorders] = useState([]);
-  
+  const [lineWidth, setLineWidth] = useState(0.5);
+  const { camera } = useThree();
+  const lastWidthRef = useRef(0.5);
+
+  useFrame(() => {
+    const dist = camera.position.length();
+    // dist ~6 = zoomed out, ~2.5 = zoomed in
+    const w = Math.round(Math.max(0.4, Math.min(2.0, (6.5 - dist) * 0.6)) * 10) / 10;
+    if (w !== lastWidthRef.current) {
+      lastWidthRef.current = w;
+      setLineWidth(w);
+    }
+  });
+
   useEffect(() => {
     fetch('https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_110m_admin_0_countries.geojson')
       .then(res => res.json())
@@ -34,17 +47,16 @@ function CountryBorders({ activeContinent, activeCountry }) {
         data.features.forEach(feature => {
           const continent = feature.properties.CONTINENT;
           const country = feature.properties.NAME || feature.properties.ADMIN;
-          const coords = feature.geometry.type === 'Polygon' 
+          const coords = feature.geometry.type === 'Polygon'
             ? [feature.geometry.coordinates]
             : feature.geometry.coordinates;
-          
           coords.forEach(polygon => {
             polygon.forEach(ring => {
               const points = ring.map(([lng, lat]) => {
                 const vec = latLngToVector3(lat, lng, 2.002);
                 return new THREE.Vector3(...vec);
               });
-              lines.push({ points, continent, country });
+              if (points.length >= 2) lines.push({ points, continent, country });
             });
           });
         });
@@ -68,22 +80,16 @@ function CountryBorders({ activeContinent, activeCountry }) {
         } else if (activeContinent) {
           isActive = line.continent === activeContinent;
         }
-
-        const color = '#ffffff';
-        const opacity = hasFilter ? (isActive ? 0.9 : 0.05) : 0.1;
-        
+        const opacity = hasFilter ? (isActive ? 0.9 : 0.05) : 0.12;
         return (
-          <line key={idx}>
-            <bufferGeometry>
-              <bufferAttribute
-                attach="attributes-position"
-                count={line.points.length}
-                array={new Float32Array(line.points.flatMap(p => [p.x, p.y, p.z]))}
-                itemSize={3}
-              />
-            </bufferGeometry>
-            <lineBasicMaterial color={color} transparent opacity={opacity} />
-          </line>
+          <Line
+            key={idx}
+            points={line.points}
+            color="#ffffff"
+            transparent
+            opacity={opacity}
+            lineWidth={lineWidth}
+          />
         );
       })}
     </group>
