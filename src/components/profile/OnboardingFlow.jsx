@@ -250,7 +250,7 @@ export default function OnboardingFlow({ user, onComplete, onSkip }) {
     if (!formData.city) return toast.error(lang === 'es' ? 'Seleccioná tu ciudad' : 'Please select your city');
     try {
       setIsSaving(true);
-      const uId = user?.id;
+      const uId = user?.email || user?.id;
 
       const { data: existing } = await supabase
         .from('fans')
@@ -293,7 +293,7 @@ export default function OnboardingFlow({ user, onComplete, onSkip }) {
     if (!formData.city) return toast.error(lang === 'es' ? 'Seleccioná tu ciudad' : 'Please select your city');
     try {
       setIsSaving(true);
-      const uId = user?.id;
+      const uId = user?.email || user?.id;
 
       const { data: existing } = await supabase
         .from('organizers')
