@@ -170,6 +170,9 @@ export default function ProfileSettings() {
       sessionStorage.removeItem('yira_has_zoomed_to_user');
       toast.success(t('dateAdded'));
     },
+    onError: (err) => {
+      toast.error(err?.message || t('loginError'));
+    },
   });
 
   const updateDateMutation = useMutation({
@@ -183,6 +186,9 @@ export default function ProfileSettings() {
       refetchDates();
       toast.success(t('dateUpdated'));
     },
+    onError: (err) => {
+      toast.error(err?.message || t('loginError'));
+    },
   });
 
   const deleteDateMutation = useMutation({
@@ -195,6 +201,9 @@ export default function ProfileSettings() {
       refetchDates();
       sessionStorage.removeItem('yira_has_zoomed_to_user');
       toast.success(t('dateRemoved'));
+    },
+    onError: (err) => {
+      toast.error(err?.message || t('loginError'));
     },
   });
 
