@@ -11,6 +11,7 @@ import ArtistsLanding from './pages/ArtistsLanding';
 import About from './pages/About';
 import Contact from './pages/Contact';
 import ClaimProfile from './pages/ClaimProfile';
+import Privacy from './pages/Privacy';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -102,6 +103,7 @@ const AuthenticatedApp = () => {
       } />
       <Route path="about" element={<About />} />
       <Route path="contact" element={<Contact />} />
+      <Route path="privacy" element={<Privacy />} />
       <Route path="claim" element={<LayoutWrapper currentPageName="claim"><ClaimProfile /></LayoutWrapper>} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
