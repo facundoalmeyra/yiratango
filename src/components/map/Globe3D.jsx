@@ -52,7 +52,7 @@ function CountryBorders({ activeContinent, activeCountry }) {
       });
   }, []);
 
-  if (!activeContinent && !activeCountry) return null;
+  const hasFilter = !!(activeContinent || activeCountry);
 
   return (
     <group>
@@ -61,16 +61,16 @@ function CountryBorders({ activeContinent, activeCountry }) {
         if (activeCountry) {
           const c1 = line.country ? line.country.toLowerCase() : '';
           const c2 = activeCountry.toLowerCase();
-          isActive = c1 === c2 || 
-            (c1 === 'united states of america' && c2 === 'united states') || 
+          isActive = c1 === c2 ||
+            (c1 === 'united states of america' && c2 === 'united states') ||
             (c1 === 'united states' && c2 === 'usa') ||
             (c1 === 'united kingdom' && c2 === 'uk');
         } else if (activeContinent) {
           isActive = line.continent === activeContinent;
         }
-        
-        const color = isActive ? '#ffffff' : '#333333';
-        const opacity = isActive ? 1.0 : 0.2;
+
+        const color = '#ffffff';
+        const opacity = hasFilter ? (isActive ? 0.9 : 0.05) : 0.1;
         
         return (
           <line key={idx}>
