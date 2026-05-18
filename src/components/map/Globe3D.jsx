@@ -171,7 +171,7 @@ const ClusterMarker3D = React.memo(({ count, position, onClusterClick, status, v
           }}
           className={`relative w-8 h-8 flex items-center justify-center rounded-full border-2 bg-black cursor-pointer shadow-md transition-all duration-200 ${
             status === 'LIVE' ? 'border-[#00C2D4] shadow-[0_0_15px_rgba(0,194,212,0.5)]' :
-            status === 'TRANSIT' ? 'border-[#F2EF1D] shadow-[0_0_10px_rgba(242,239,29,0.3)]' :
+            status === 'TRANSIT' ? 'border-white/40' :
             status === 'UPCOMING' ? 'border-white/40' :
             'border-white/60'
           }`}

@@ -384,7 +384,7 @@ export default function ArtistProfileContent({ artistIdOrSlug }) {
                         {t('live')}
                       </span>
                     ) : state.status === 'TRANSIT' ? (
-                      <span className="inline-flex items-center justify-center gap-2 px-5 h-9 md:h-10 bg-[#F2EF1D]/20 border border-[#F2EF1D]/40 text-[#F2EF1D] text-xs md:text-sm font-semibold rounded-full tracking-wide uppercase shadow-lg whitespace-nowrap">
+                      <span className="flex items-center justify-center gap-2 px-5 h-9 md:h-10 bg-white/5 border border-white/10 text-white/60 text-xs md:text-sm font-semibold rounded-full tracking-wider uppercase whitespace-nowrap backdrop-blur-sm">
                         <Plane className="w-3 h-3 md:w-4 md:h-4" />
                         {t('inTransit')} • {state.daysUntil} D
                       </span>

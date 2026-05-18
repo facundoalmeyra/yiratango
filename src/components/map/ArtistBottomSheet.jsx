@@ -140,7 +140,7 @@ export default function ArtistBottomSheet({ artist, tours, isOpen, onClose }) {
                           LIVE
                         </span>
                       ) : state.status === 'TRANSIT' ? (
-                        <span className="flex items-center gap-1 px-2 py-0.5 bg-[#F2EF1D]/30 border border-[#F2EF1D]/50 text-black text-[9px] font-bold rounded-full tracking-wider uppercase whitespace-nowrap">
+                        <span className="flex items-center gap-1 px-2 py-0.5 bg-black/10 border border-black/20 text-black/60 text-[9px] font-bold rounded-full tracking-wider uppercase whitespace-nowrap">
                           <Plane className="w-3 h-3" />
                           {t('inTransit')} • {state.daysUntil} D
                         </span>

@@ -53,7 +53,7 @@ export default function StatusAvatar({
         className={cn(
           "relative z-10 border-2 bg-[#111111] text-white w-full h-full",
           status === 'LIVE' ? 'border-[#00C2D4] shadow-[0_0_8px_rgba(0,194,212,0.6)]' : 
-          status === 'TRANSIT' ? 'border-[#F2EF1D] shadow-[0_0_8px_rgba(242,239,29,0.6)]' :
+          status === 'TRANSIT' ? 'border-white/40' :
           status === 'UPCOMING' ? 'border-white/60' :
           baseBorderColor,
           avatarClassName

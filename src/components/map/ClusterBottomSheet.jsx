@@ -114,7 +114,7 @@ export default function ClusterBottomSheet({ isOpen, onClose, artists, tours, on
                         <MapPin className="w-3 h-3" /> LIVE
                       </span>
                     ) : state.status === 'TRANSIT' ? (
-                      <span className="flex items-center gap-1 text-[10px] font-bold text-[#F2EF1D] bg-[#F2EF1D]/10 px-2 py-1 rounded-full">
+                      <span className="flex items-center gap-1 text-[10px] font-bold text-white/50 bg-white/10 px-2 py-1 rounded-full">
                         <Plane className="w-3 h-3" /> {t('inTransit').toUpperCase()}
                       </span>
                     ) : null}

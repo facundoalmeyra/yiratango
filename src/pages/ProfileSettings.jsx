@@ -296,7 +296,7 @@ export default function ProfileSettings() {
               )}
               <div className={`relative z-10 w-12 h-12 md:w-20 md:h-20 rounded-full overflow-hidden border-3 border-[#1A1A1A] shadow-lg bg-[#111111] transition-all duration-300
                 ${activeMode === 'current' ? 'ring-2 ring-[#00C2D4] shadow-[0_0_15px_rgba(0,194,212,0.3)]' :
-                  activeMode === 'transit' ? 'ring-2 ring-[#F2EF1D] shadow-[0_0_15px_rgba(242,239,29,0.3)]' :
+                  activeMode === 'transit' ? 'ring-1 ring-white/20' :
                   'ring-1 ring-white/10'}`}>
                 <UserAvatar artistProfile={artistProfile} size="full" className="w-full h-full text-2xl text-black bg-white" />
               </div>
@@ -397,8 +397,8 @@ export default function ProfileSettings() {
                     ) : activeMode === 'transit' ? (
                       <div className="flex flex-col md:flex-row items-center md:items-center text-center md:text-left gap-4 w-full">
                         <div className="flex flex-col items-center md:items-start space-y-1.5 md:space-y-2 flex-1">
-                          <div className="inline-flex items-center justify-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#F2EF1D]/10 text-[#F2EF1D] border border-[#F2EF1D]/20 mb-1">
-                            <span className="relative flex h-1.5 w-1.5"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#F2EF1D] opacity-75"></span><span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#F2EF1D]"></span></span>
+                          <div className="inline-flex items-center justify-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/5 text-white/50 border border-white/10 mb-1">
+                            <Plane className="w-2.5 h-2.5" />
                             <span className="text-[9px] font-bold tracking-wide uppercase">{t('inTransit')} • {tourState.daysUntil} {lang === 'es' ? 'días' : 'days'}</span>
                           </div>
                           <h2 className="text-2xl md:text-xl font-bold text-white tracking-tight">

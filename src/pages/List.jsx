@@ -105,8 +105,8 @@ const ArtistCard = ({ artist, tours, onClick }) => {
               LIVE
             </span>
           ) : state.status === 'TRANSIT' ? (
-            <span className="text-[9px] md:text-[10px] border border-[#F2EF1D]/30 text-[#F2EF1D] px-2.5 py-1 rounded-full whitespace-nowrap tracking-wider font-medium uppercase bg-[#F2EF1D]/10 backdrop-blur-sm flex items-center gap-1.5">
-              <Plane className="w-3 h-3 text-[#F2EF1D]" />
+            <span className="text-[9px] md:text-[10px] border border-white/10 text-white/50 px-2.5 py-1 rounded-full whitespace-nowrap tracking-wider font-medium uppercase bg-white/5 backdrop-blur-sm flex items-center gap-1.5">
+              <Plane className="w-3 h-3" />
               {t('inTransit')}
             </span>
           ) : state.status === 'UPCOMING' ? (
