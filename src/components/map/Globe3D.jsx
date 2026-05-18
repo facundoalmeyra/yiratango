@@ -32,7 +32,7 @@ function CountryBorders({ activeContinent, activeCountry }) {
   useFrame(() => {
     const dist = camera.position.length();
     // dist ~6 = zoomed out, ~2.5 = zoomed in
-    const w = Math.round(Math.max(0.8, Math.min(4.0, (6.5 - dist) * 1.2)) * 10) / 10;
+    const w = Math.round(Math.max(0.5, Math.min(2.5, (6.5 - dist) * 0.8)) * 10) / 10;
     if (w !== lastWidthRef.current) {
       lastWidthRef.current = w;
       setLineWidth(w);
@@ -80,7 +80,7 @@ function CountryBorders({ activeContinent, activeCountry }) {
         } else if (activeContinent) {
           isActive = line.continent === activeContinent;
         }
-        const opacity = hasFilter ? (isActive ? 0.9 : 0.05) : 0.3;
+        const opacity = hasFilter ? (isActive ? 0.9 : 0.05) : 0.2;
         return (
           <Line
             key={idx}
