@@ -264,6 +264,7 @@ export default function ArtistBottomSheet({ artist, tours, isOpen, onClose }) {
                     <TabBar
                         className="mb-4"
                         theme="light"
+                        fullWidth={false}
                         layoutId="tourTabIndicatorBottomSheet"
                         activeTab={activeTab}
                         onChange={setActiveTab}

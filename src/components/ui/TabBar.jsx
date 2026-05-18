@@ -8,18 +8,20 @@ import { motion } from 'framer-motion';
  *   activeTab: string,
  *   onChange: (key: string) => void,
  *   theme?: 'dark' | 'light',
+ *   fullWidth?: boolean,
  *   layoutId?: string,
  *   className?: string,
  * }} props
  */
-export default function TabBar({ tabs, activeTab, onChange, theme = 'dark', layoutId = 'tabBar', className = '' }) {
+export default function TabBar({ tabs, activeTab, onChange, theme = 'dark', fullWidth = true, layoutId = 'tabBar', className = '' }) {
   const dark = theme === 'dark';
 
   return (
     <div
       role="tablist"
       className={[
-        'flex w-full',
+        'flex',
+        fullWidth ? 'w-full' : 'w-auto',
         dark ? 'border-b border-white/10' : 'border-b border-black/10',
         className,
       ].join(' ')}
@@ -34,8 +36,9 @@ export default function TabBar({ tabs, activeTab, onChange, theme = 'dark', layo
             onClick={() => onChange(tab.key)}
             className={[
               // layout
-              'relative flex-1 flex items-center justify-center gap-2',
-              'min-h-[44px] px-3 py-3',
+              'relative flex items-center justify-center gap-2',
+              fullWidth ? 'flex-1' : 'flex-none',
+              'min-h-[44px] px-4 py-3',
               // typography
               'text-sm font-semibold tracking-wide select-none',
               // transitions

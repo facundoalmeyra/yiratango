@@ -38,7 +38,7 @@ export default function ArtistProfileContent({ artistIdOrSlug }) {
       const { data: byId } = await supabase.from('artists').select('*').eq('id', p).limit(1);
       return byId || [];
     },
-    enabled: !!phace
+    enabled: !!p
   });
 
   const artist = artists?.[0];
@@ -467,6 +467,7 @@ export default function ArtistProfileContent({ artistIdOrSlug }) {
                 <TabBar
                     className="mb-6"
                     layoutId="tourTabIndicator"
+                    fullWidth={false}
                     activeTab={activeTab}
                     onChange={setActiveTab}
                     tabs={[
