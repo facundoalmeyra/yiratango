@@ -15,6 +15,7 @@ import FollowButton from '@/components/profile/FollowButton';
 import VisitRequestCard from '@/components/profile/VisitRequestCard';
 import { useI18n } from '@/components/contexts/I18nContext';
 import LanguageSwitcher from '@/components/map/LanguageSwitcher';
+import TabBar from '@/components/ui/TabBar';
 
 export default function ArtistProfileContent({ artistIdOrSlug }) {
   const { t } = useI18n();
@@ -37,7 +38,7 @@ export default function ArtistProfileContent({ artistIdOrSlug }) {
       const { data: byId } = await supabase.from('artists').select('*').eq('id', p).limit(1);
       return byId || [];
     },
-    enabled: !!p
+    enabled: !!phace
   });
 
   const artist = artists?.[0];
@@ -226,7 +227,7 @@ export default function ArtistProfileContent({ artistIdOrSlug }) {
                   </div>
                 </div>
 
-                <div className="flex-1 min-w-0 border-l border-white/10 pl-4 md:pl-6">
+                <div className="flex-1 min-w-0 border-l border-wh ite/10 pl-4 md:pl-6">
                   <h4 className="font-bold text-white text-lg md:text-xl break-words mb-1">
                     {tour.city}, {tour.country}
                   </h4>
@@ -463,36 +464,16 @@ export default function ArtistProfileContent({ artistIdOrSlug }) {
                    <h2 className="text-xl font-bold">{t('tourDates')}</h2>
                 </div>
 
-                <div className="flex gap-6 mb-6 border-b border-white/10">
-                   <button
-                       onClick={() => setActiveTab('upcoming')}
-                       className={`pb-3 text-sm font-medium transition-all relative ${
-                           activeTab === 'upcoming' ? 'text-white' : 'text-white/70 hover:text-white/80'
-                       }`}
-                   >
-                       {t('upcoming')}
-                       {activeTab === 'upcoming' && (
-                           <motion.div
-                               layoutId="tourTabIndicator"
-                               className="absolute bottom-0 left-0 right-0 h-0.5 bg-white"
-                           />
-                       )}
-                   </button>
-                   <button
-                       onClick={() => setActiveTab('past')}
-                       className={`pb-3 text-sm font-medium transition-all relative ${
-                           activeTab === 'past' ? 'text-white' : 'text-white/70 hover:text-white/80'
-                       }`}
-                   >
-                       {t('past')}
-                       {activeTab === 'past' && (
-                           <motion.div
-                               layoutId="tourTabIndicator"
-                               className="absolute bottom-0 left-0 right-0 h-0.5 bg-white"
-                           />
-                       )}
-                   </button>
-                </div>
+                <TabBar
+                    className="mb-6"
+                    layoutId="tourTabIndicator"
+                    activeTab={activeTab}
+                    onChange={setActiveTab}
+                    tabs={[
+                        { key: 'upcoming', label: t('upcoming') },
+                        { key: 'past',     label: t('past') },
+                    ]}
+                />
 
                 {activeTab === 'upcoming' 
                    ? renderTourList(upcomingTours, t('noUpcomingToursEmpty'), true) 

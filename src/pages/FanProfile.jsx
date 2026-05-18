@@ -20,6 +20,7 @@ import { useI18n } from '@/components/contexts/I18nContext';
 import LanguageSwitcher from '@/components/map/LanguageSwitcher';
 import NotificationBell from '@/components/notifications/NotificationBell';
 import ChangePasswordSection from '@/components/profile/ChangePasswordSection';
+import TabBar from '@/components/ui/TabBar';
 
 function EditFanProfileForm({ user, fanProfile, onSave, onCancel, onDelete, isSaving }) {
   const { t } = useI18n();
@@ -413,19 +414,17 @@ export default function FanProfile() {
           </motion.div>
         </section>
 
-        <div className="flex w-full mb-8 border-b border-white/10">
-          {[
-            { key: 'following', icon: <Heart className="w-4 h-4" />, label: t('followedArtists') },
+        <TabBar
+          className="mb-8"
+          layoutId="activeTabFanProfile"
+          activeTab={activeTab}
+          onChange={setActiveTab}
+          tabs={[
+            { key: 'following',   icon: <Heart className="w-4 h-4" />,   label: t('followedArtists') },
             ...(isOrganizer ? [{ key: 'my_requests', icon: <Send className="w-4 h-4" />, label: t('myRequests') }] : []),
-            { key: 'account', icon: <UserIcon className="w-4 h-4" />, label: t('myProfile') },
-          ].map(tab => (
-            <button key={tab.key} onClick={() => setActiveTab(tab.key)}
-              className={`flex-1 flex items-center justify-center gap-2 py-4 text-sm md:text-base font-bold transition-all relative ${activeTab === tab.key ? 'text-white' : 'text-white/50 hover:text-white/80'}`}>
-              {tab.icon}{tab.label}
-              {activeTab === tab.key && <motion.div layoutId="activeTabFanProfile" className="absolute bottom-[-1px] left-0 right-0 h-1 bg-white" />}
-            </button>
-          ))}
-        </div>
+            { key: 'account',     icon: <UserIcon className="w-4 h-4" />, label: t('myProfile') },
+          ]}
+        />
 
         {activeTab === 'following' && (
           <section>

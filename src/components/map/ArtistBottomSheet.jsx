@@ -9,6 +9,7 @@ import { isTourActive, isTourOngoing, getArtistState } from '@/components/utils/
 import StatusAvatar from '@/components/profile/StatusAvatar';
 import FollowButton from '@/components/profile/FollowButton';
 import { useI18n } from '@/components/contexts/I18nContext';
+import TabBar from '@/components/ui/TabBar';
 
 export default function ArtistBottomSheet({ artist, tours, isOpen, onClose }) {
   const { t } = useI18n();
@@ -260,36 +261,17 @@ export default function ArtistBottomSheet({ artist, tours, isOpen, onClose }) {
                        <h3 className="text-sm font-semibold text-black">{t('tourDates')}</h3>
                     </div>
                     
-                    <div className="flex gap-6 mb-4 border-b border-black/10">
-                       <button
-                           onClick={() => setActiveTab('upcoming')}
-                           className={`pb-2 text-xs font-medium transition-all relative ${
-                               activeTab === 'upcoming' ? 'text-black' : 'text-black/50 hover:text-black/80'
-                           }`}
-                       >
-                           {t('upcoming')}
-                           {activeTab === 'upcoming' && (
-                               <motion.div
-                                   layoutId="tourTabIndicatorBottomSheet"
-                                   className="absolute bottom-0 left-0 right-0 h-0.5 bg-black"
-                               />
-                           )}
-                       </button>
-                       <button
-                           onClick={() => setActiveTab('past')}
-                           className={`pb-2 text-xs font-medium transition-all relative ${
-                               activeTab === 'past' ? 'text-black' : 'text-black/50 hover:text-black/80'
-                           }`}
-                       >
-                           {t('past')}
-                           {activeTab === 'past' && (
-                               <motion.div
-                                   layoutId="tourTabIndicatorBottomSheet"
-                                   className="absolute bottom-0 left-0 right-0 h-0.5 bg-black"
-                               />
-                           )}
-                       </button>
-                    </div>
+                    <TabBar
+                        className="mb-4"
+                        theme="light"
+                        layoutId="tourTabIndicatorBottomSheet"
+                        activeTab={activeTab}
+                        onChange={setActiveTab}
+                        tabs={[
+                            { key: 'upcoming', label: t('upcoming') },
+                            { key: 'past',     label: t('past') },
+                        ]}
+                    />
 
                     <div className="space-y-3">
                       {(activeTab === 'upcoming' ? upcomingTours : pastTours).length > 0 ? (

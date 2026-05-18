@@ -2,10 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/api/supabaseClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
+import {
   ArrowLeft, MapPin, Calendar, Plus, Trash2,
   Loader2, Pencil, Clock, Plane, AlertCircle, Copy, ExternalLink, MessageCircle, User as UserIcon, Map
 } from 'lucide-react';
+import TabBar from '@/components/ui/TabBar';
 import SEO from '@/components/seo/SEO';
 import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
@@ -447,19 +448,17 @@ export default function ProfileSettings() {
           );
         })()}
 
-        <div className="flex w-full mb-8 border-b border-white/10">
-          {[
-            { key: 'dates', icon: <Calendar className="w-4 h-4" />, label: t('myDates') },
+        <TabBar
+          className="mb-8"
+          layoutId="activeTabProfileSettings"
+          activeTab={activeTab}
+          onChange={handleTabChange}
+          tabs={[
+            { key: 'dates',    icon: <Calendar className="w-4 h-4" />,    label: t('myDates') },
             { key: 'requests', icon: <MessageCircle className="w-4 h-4" />, label: t('requestsTab') },
-            { key: 'account', icon: <UserIcon className="w-4 h-4" />, label: t('profile') },
-          ].map(tab => (
-            <button key={tab.key} onClick={() => handleTabChange(tab.key)}
-              className={`flex-1 flex items-center justify-center gap-2 py-4 text-sm md:text-base font-bold transition-all relative ${activeTab === tab.key ? 'text-white' : 'text-white/70 hover:text-white'}`}>
-              {tab.icon}{tab.label}
-              {activeTab === tab.key && <motion.div layoutId="activeTabProfileSettings" className="absolute bottom-[-1px] left-0 right-0 h-1 bg-white" />}
-            </button>
-          ))}
-        </div>
+            { key: 'account',  icon: <UserIcon className="w-4 h-4" />,     label: t('profile') },
+          ]}
+        />
 
         <div className="min-h-[60vh]">
           {activeTab === 'dates' && (
