@@ -623,6 +623,25 @@ export const translations = {
     passwordChangeFailed: "Error al cambiar la contraseña. Revisá tu contraseña actual.",
     passwordsDoNotMatch: "Las contraseñas no coinciden",
 
+    // Login
+    signIn: "Iniciar Sesión",
+    signUp: "Crear Cuenta",
+    emailPlaceholder: "tu@email.com",
+    passwordPlaceholder: "Contraseña",
+    confirmPasswordPlaceholder: "Confirmá la contraseña",
+    forgotPassword: "¿Olvidaste tu contraseña?",
+    sendResetEmail: "Enviar email de recuperación",
+    resetEmailSent: "Revisá tu email para el link de recuperación.",
+    orContinueWith: "o continuá con",
+    signInWithGoogle: "Continuar con Google",
+    signInWithFacebook: "Continuar con Facebook",
+    signInWithApple: "Continuar con Apple",
+    backToLogin: "Volver al inicio de sesión",
+    checkEmailConfirm: "¡Cuenta creada! Revisá tu email para confirmar antes de iniciar sesión.",
+    invalidEmail: "Ingresá un email válido",
+    loginError: "Algo salió mal. Intentalo de nuevo.",
+    passwordTooShort: "La contraseña debe tener al menos 6 caracteres",
+
     // Claim Profile
     claimTitle: "Reclamá tu perfil de artista",
     claimSubtitle: "Ingresá el código que recibiste para vincular tu perfil de artista a tu cuenta. Podés reutilizar el código cuando quieras cambiar de cuenta.",
