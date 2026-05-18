@@ -197,10 +197,12 @@ export default function OnboardingFlow({ user, onComplete, onSkip }) {
     try {
       const uId = user?.id;
 
+      // eslint-disable-next-line no-unused-vars
+      const { city, country, latitude, longitude, ...artistData } = formData;
       const { data: newArtist, error } = await supabase
         .from('artists')
         .insert({
-          ...formData,
+          ...artistData,
           user_id: uId,
           slug: generateSlug(formData.name, formData.partner_name, formData.profileType),
           instagram_url: cleanUsername(formData.instagram_url, 'instagram.com'),

@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Navigation, Loader2, MapPin, AlertCircle } from 'lucide-react';
+import { Navigation, Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { supabase } from '@/api/supabaseClient';
 
 export default function LocationDetector({ onLocationDetected, disabled = false }) {
   const [isDetecting, setIsDetecting] = useState(false);
@@ -22,32 +21,22 @@ export default function LocationDetector({ onLocationDetected, disabled = false 
         const { latitude, longitude } = position.coords;
         
         try {
-          // Reverse geocode to get city/country
-          const { data, error: invokeError } = await supabase.functions.invoke('invokeLLM', {
-            body: {
-              prompt: `What city and country are at coordinates latitude ${latitude}, longitude ${longitude}? Return the exact city name and country.`,
-              add_context_from_internet: true,
-              response_json_schema: {
-                type: "object",
-                properties: {
-                  city: { type: "string" },
-                  country: { type: "string" },
-                  formatted_address: { type: "string" }
-                }
-              }
-            }
-          });
+          const resp = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&addressdetails=1`,
+            { headers: { 'Accept-Language': 'en' } }
+          );
+          const result = await resp.json();
+          const addr = result?.address;
+          const city = addr?.city || addr?.town || addr?.village || addr?.county;
+          const country = addr?.country;
 
-          if (invokeError) throw invokeError;
-          const result = data;
-
-          if (result?.city && result?.country) {
+          if (city && country) {
             onLocationDetected({
-              city: result.city,
-              country: result.country,
+              city,
+              country,
               latitude,
               longitude,
-              displayName: `${result.city}, ${result.country}`
+              displayName: `${city}, ${country}`
             });
           } else {
             setError('Could not determine your city');

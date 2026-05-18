@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MapPin, Loader2, Search, Check } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { supabase } from '@/api/supabaseClient';
 import { Popover, PopoverContent, PopoverAnchor } from "@/components/ui/popover";
 import { useI18n } from '@/components/contexts/I18nContext';
 import { translateCountryToSpanish } from '@/components/utils/spanishToEnglish';
@@ -34,37 +33,32 @@ export default function CityAutocomplete({
 
     setIsLoading(true);
     try {
-      const { data, error: invokeError } = await supabase.functions.invoke('invokeLLM', {
-        body: {
-          prompt: `Find the top 5 real cities matching "${searchQuery}". The user may be typing in Spanish or English. Return ONLY valid, well-known cities with accurate coordinates. Always return city and country names in English regardless of the input language.`,
-          add_context_from_internet: true,
-          response_json_schema: {
-            type: "object",
-            properties: {
-              cities: {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    city: { type: "string" },
-                    country: { type: "string" },
-                    latitude: { type: "number" },
-                    longitude: { type: "number" }
-                  }
-                }
-              }
-            }
-          }
-        }
+      const resp = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchQuery)}&format=json&limit=8&addressdetails=1`,
+        { headers: { 'Accept-Language': 'en' } }
+      );
+      const results = await resp.json();
+
+      const cities = results
+        .filter((/** @type {any} */ r) => r.address)
+        .map((/** @type {any} */ r) => ({
+          city: r.address.city || r.address.town || r.address.village || r.address.county || r.name,
+          country: r.address.country || '',
+          latitude: parseFloat(r.lat),
+          longitude: parseFloat(r.lon),
+        }))
+        .filter((/** @type {any} */ c) => c.city && c.country);
+
+      const seen = new Set();
+      const unique = cities.filter((/** @type {any} */ c) => {
+        const key = `${c.city}-${c.country}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
       });
 
-      if (invokeError) throw invokeError;
-      const result = data;
-
-      if (result?.cities) {
-        setSuggestions(result.cities.slice(0, 5));
-        setIsOpen(true);
-      }
+      setSuggestions(unique.slice(0, 5));
+      setIsOpen(true);
     } catch (err) {
       console.error('City search error:', err);
       setSuggestions([]);
