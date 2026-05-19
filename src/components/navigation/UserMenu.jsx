@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Menu, MapPin, Heart, User as UserIcon } from 'lucide-react';
+import { Menu, MapPin, Heart, User as UserIcon, Inbox } from 'lucide-react';
 import { createPageUrl } from '@/utils';
 import { supabase } from '@/api/supabaseClient';
 import { useI18n } from '@/components/contexts/I18nContext';
@@ -79,8 +79,8 @@ export default function UserMenu({
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild className="cursor-pointer hover:bg-white/10 focus:bg-white/10 focus:text-white">
                         <Link to={`${createPageUrl('ProfileSettings')}?tab=requests`} className="w-full flex items-center gap-2">
-                          <Heart className="w-4 h-4" />
-                          {t('fanRequests')}
+                          <Inbox className="w-4 h-4" />
+                          {t('requestsTab')}
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild className="cursor-pointer hover:bg-white/10 focus:bg-white/10 focus:text-white">

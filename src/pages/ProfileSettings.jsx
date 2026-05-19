@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft, MapPin, Calendar, Plus, Trash2,
-  Loader2, Pencil, Clock, Plane, AlertCircle, Copy, ExternalLink, MessageCircle, User as UserIcon, Map, Heart, Users
+  Loader2, Pencil, Clock, Plane, AlertCircle, Copy, ExternalLink, Inbox, User as UserIcon, Map, Heart, Users
 } from 'lucide-react';
 import TabBar from '@/components/ui/TabBar';
 import SEO from '@/components/seo/SEO';
@@ -512,7 +512,7 @@ export default function ProfileSettings() {
           onChange={handleTabChange}
           tabs={[
             { key: 'dates',     icon: <Calendar className="w-4 h-4" />,      label: t('myDates') },
-            { key: 'requests',  icon: <MessageCircle className="w-4 h-4" />, label: t('requestsTab') },
+            { key: 'requests',  icon: <Inbox className="w-4 h-4" />, label: t('requestsTab') },
             { key: 'following', icon: <Heart className="w-4 h-4" />,         label: t('following'), badge: followedArtists.length || undefined },
             { key: 'account',   icon: <UserIcon className="w-4 h-4" />,      label: t('profile') },
           ]}
