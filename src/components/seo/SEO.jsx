@@ -13,7 +13,7 @@ export default function SEO({
   canonicalUrl
 }) {
   // Default: Yira logo. Landing page passes hero illustration. Artist profiles pass avatar_url.
-  const finalImage = image || "https://media.base44.com/images/public/6985f5bb902ec2f8c9596a0d/530951993_newyiralogo.png";
+  const finalImage = image || "https://ajljhfxvkmxcmmsfuknj.supabase.co/storage/v1/object/public/assets/logo.png";
 
   useEffect(() => {
     // 1. Update Document Title

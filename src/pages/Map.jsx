@@ -122,8 +122,8 @@ export default function Map() {
     
     // Preload background image
     const bgUrl = isMobile 
-      ? 'https://media.base44.com/images/public/6985f5bb902ec2f8c9596a0d/9444476b4_mobile.jpeg'
-      : 'https://media.base44.com/images/public/6985f5bb902ec2f8c9596a0d/aa96e200c_newdesktop.jpeg';
+      ? 'https://ajljhfxvkmxcmmsfuknj.supabase.co/storage/v1/object/public/assets/map-mobile.jpeg'
+      : 'https://ajljhfxvkmxcmmsfuknj.supabase.co/storage/v1/object/public/assets/map-desktop.jpeg';
     
     const img = new Image();
     img.onload = () => setBgLoaded(true);
@@ -429,8 +429,8 @@ export default function Map() {
   if (pParam) return <ArtistProfile />;
 
   const bgUrl = isMobile 
-    ? 'https://media.base44.com/images/public/6985f5bb902ec2f8c9596a0d/9444476b4_mobile.jpeg'
-    : 'https://media.base44.com/images/public/6985f5bb902ec2f8c9596a0d/aa96e200c_newdesktop.jpeg';
+    ? 'https://ajljhfxvkmxcmmsfuknj.supabase.co/storage/v1/object/public/assets/map-mobile.jpeg'
+    : 'https://ajljhfxvkmxcmmsfuknj.supabase.co/storage/v1/object/public/assets/map-desktop.jpeg';
 
   return (
     <div 
