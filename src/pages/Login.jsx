@@ -79,11 +79,17 @@ export default function Login() {
         window.location.href = `/${lang}/map`;
       }
     } catch (err) {
-      const msg = err instanceof Error ? err.message : '';
-      if (msg.toLowerCase().includes('invalid login') || msg.toLowerCase().includes('invalid credentials') || msg.toLowerCase().includes('email not confirmed')) {
+      const msg = (err instanceof Error ? err.message : String(err)).toLowerCase();
+      if (msg.includes('invalid login') || msg.includes('invalid credentials') || msg.includes('email not confirmed')) {
         setError(t('wrongEmailOrPassword'));
+      } else if (msg.includes('rate limit') || msg.includes('email rate')) {
+        setError(t('emailRateLimit'));
+      } else if (msg.includes('already registered') || msg.includes('user already exists')) {
+        setError(t('emailAlreadyRegistered'));
+      } else if (msg.includes('password')) {
+        setError(t('passwordTooShort'));
       } else {
-        setError(t('loginError'));
+        setError(err instanceof Error ? err.message : t('loginError'));
       }
     } finally {
       setLoading(false);

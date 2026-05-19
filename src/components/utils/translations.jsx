@@ -315,6 +315,8 @@ export const translations = {
     invalidEmail: "Please enter a valid email address",
     loginError: "Something went wrong. Please try again.",
     wrongEmailOrPassword: "Email or password doesn't match. Double-check and try again.",
+    emailRateLimit: "Too many attempts. Please wait a few minutes and try again.",
+    emailAlreadyRegistered: "This email is already registered. Try signing in instead.",
     passwordTooShort: "Password must be at least 6 characters",
 
     // Claim Profile
@@ -648,6 +650,8 @@ export const translations = {
     invalidEmail: "Ingresá un email válido",
     loginError: "Algo salió mal. Intentalo de nuevo.",
     wrongEmailOrPassword: "El email o la contraseña no coinciden. Revisá y volvé a intentar.",
+    emailRateLimit: "Demasiados intentos. Esperá unos minutos y volvé a intentar.",
+    emailAlreadyRegistered: "Este email ya está registrado. Intentá iniciar sesión.",
     passwordTooShort: "La contraseña debe tener al menos 6 caracteres",
 
     // Claim Profile
