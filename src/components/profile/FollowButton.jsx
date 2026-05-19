@@ -7,6 +7,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useI18n } from '@/components/contexts/I18nContext';
 import { createPageUrl } from '@/utils';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 export default function FollowButton({ artistId, className, theme = 'dark' }) {
   const { t } = useI18n();
@@ -47,7 +48,8 @@ export default function FollowButton({ artistId, className, theme = 'dark' }) {
       });
       if (error) throw error;
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['follows'] })
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['follows'] }),
+    onError: (err) => toast.error(err?.message || 'Error'),
   });
 
   const unfollowMutation = useMutation({
@@ -58,7 +60,8 @@ export default function FollowButton({ artistId, className, theme = 'dark' }) {
         .eq('id', followRecord.id);
       if (error) throw error;
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['follows'] })
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['follows'] }),
+    onError: (err) => toast.error(err?.message || 'Error'),
   });
 
   const handleFollowClick = (e) => {
