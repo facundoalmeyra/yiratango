@@ -84,6 +84,12 @@ export default function UserMenu({
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild className="cursor-pointer hover:bg-white/10 focus:bg-white/10 focus:text-white">
+                        <Link to={`${createPageUrl('ProfileSettings')}?tab=following`} className="w-full flex items-center gap-2">
+                          <Heart className="w-4 h-4" />
+                          {t('following')}
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild className="cursor-pointer hover:bg-white/10 focus:bg-white/10 focus:text-white">
                         <Link to={`${createPageUrl('ProfileSettings')}?tab=account`} className="w-full flex items-center gap-2">
                           <UserIcon className="w-4 h-4" />
                           {t('myProfile')}

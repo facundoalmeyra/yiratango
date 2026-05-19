@@ -511,9 +511,9 @@ export default function ProfileSettings() {
           activeTab={activeTab}
           onChange={handleTabChange}
           tabs={[
-            { key: 'dates',     icon: <Calendar className="w-4 h-4" />,     label: t('myDates') },
-            { key: 'following', icon: <Heart className="w-4 h-4" />,        label: t('following'), badge: followedArtists.length || undefined },
+            { key: 'dates',     icon: <Calendar className="w-4 h-4" />,      label: t('myDates') },
             { key: 'requests',  icon: <MessageCircle className="w-4 h-4" />, label: t('requestsTab') },
+            { key: 'following', icon: <Heart className="w-4 h-4" />,         label: t('following'), badge: followedArtists.length || undefined },
             { key: 'account',   icon: <UserIcon className="w-4 h-4" />,      label: t('profile') },
           ]}
         />
