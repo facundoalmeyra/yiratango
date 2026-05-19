@@ -61,13 +61,9 @@ export default function Login() {
         if (error) throw error;
         setSuccess(t('resetEmailSent'));
       } else if (mode === 'signup') {
-        const { data, error } = await supabase.auth.signUp({ email, password });
+        const { error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
-        if (data.session) {
-          window.location.href = `/${lang}/map`;
-        } else {
-          setSuccess(t('checkEmailConfirm'));
-        }
+        window.location.href = `/${lang}/map`;
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
