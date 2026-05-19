@@ -346,12 +346,17 @@ export default function FanProfile() {
         await supabase.from('notifications').delete().eq('artist_id', artist.id);
         await supabase.from('artists').delete().eq('id', artist.id);
       }
+      const { error } = await supabase.rpc('delete_user');
+      if (error) throw error;
       await supabase.auth.signOut();
     },
     onSuccess: () => {
       toast.success(t('accountDeleted'));
       navigate(createPageUrl('Map'));
-    }
+    },
+    onError: (err) => {
+      toast.error(err?.message || t('loginError'));
+    },
   });
 
   if (loadingUser || loadingArtists || loadingFollows || loadingFans) {

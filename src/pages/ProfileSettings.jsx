@@ -123,11 +123,16 @@ export default function ProfileSettings() {
       await supabase.from('follows').delete().eq('fan_user_id', email);
       await supabase.from('visit_requests').delete().eq('fan_user_id', email);
       await supabase.from('notifications').delete().eq('fan_user_id', email);
+      const { error } = await supabase.rpc('delete_user');
+      if (error) throw error;
       await supabase.auth.signOut();
     },
     onSuccess: () => {
       toast.success(t('accountDeleted'));
       navigate(createPageUrl('Map'));
+    },
+    onError: (err) => {
+      toast.error(err?.message || t('loginError'));
     },
   });
 
