@@ -196,6 +196,7 @@ export default function ProfileSettings() {
       await supabase.auth.signOut({ scope: 'local' });
     },
     onSuccess: () => {
+      sessionStorage.setItem('yira_account_deleted', '1');
       window.location.href = '/';
     },
     onError: (err) => {

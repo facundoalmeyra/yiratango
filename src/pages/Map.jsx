@@ -19,6 +19,7 @@ import Logo from '@/components/ui/Logo';
 import Loader from '@/components/ui/Loader';
 import SEO from '@/components/seo/SEO';
 import { useI18n } from '@/components/contexts/I18nContext';
+import { toast } from 'sonner';
 import ArtistProfile from './ArtistProfile';
 import UserMenu from '@/components/navigation/UserMenu';
 import WelcomeModal from '@/components/map/WelcomeModal';
@@ -101,6 +102,10 @@ export default function Map() {
     if (sessionStorage.getItem('yira_show_fan_welcome') === 'true') {
       setShowFanWelcome(true);
       sessionStorage.removeItem('yira_show_fan_welcome');
+    }
+    if (sessionStorage.getItem('yira_account_deleted') === '1') {
+      sessionStorage.removeItem('yira_account_deleted');
+      toast.success(t('accountDeleted'));
     }
   }, []);
 
