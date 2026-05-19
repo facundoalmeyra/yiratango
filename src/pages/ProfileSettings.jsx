@@ -32,30 +32,54 @@ import NotificationBell from '@/components/notifications/NotificationBell';
  */
 function FollowRow({ artist, followId, index, t, queryClient }) {
   const [removing, setRemoving] = useState(false);
-  const handleUnfollow = async (/** @type {React.MouseEvent} */ e) => {
-    e.preventDefault(); e.stopPropagation();
+  const [showConfirm, setShowConfirm] = useState(false);
+
+  const doUnfollow = async () => {
     setRemoving(true);
     await supabase.from('follows').delete().eq('id', followId);
     queryClient.invalidateQueries({ queryKey: ['artist_follows'] });
   };
+
   return (
-    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.04 }}>
-      <Link to={`${createPageUrl('ArtistProfile')}?p=${artist.slug || artist.id}`} className="group flex items-center gap-3 p-4 hover:bg-white/5 transition-colors">
-        <div className="w-10 h-10 flex-shrink-0">
-          <UserAvatar user={null} artistProfile={artist} size="full" className="rounded-full" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="font-semibold text-white truncate text-sm">
-            {artist.profileType === 'Couple' && artist.partner_name ? `${artist.name} & ${artist.partner_name}` : artist.name}
-          </p>
-          <p className="text-xs text-white/40 uppercase tracking-wider truncate">{artist.category || 'Maestro'}</p>
-        </div>
-        <button onClick={handleUnfollow} disabled={removing}
-          className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-white/20 text-white/60 hover:text-white hover:border-white/40 text-xs font-medium transition-colors">
-          {removing ? <Loader2 className="w-3 h-3 animate-spin" /> : <><Heart className="w-3 h-3 fill-current" /><span>{t('following')}</span></>}
-        </button>
-      </Link>
-    </motion.div>
+    <>
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.04 }}>
+        <Link to={`${createPageUrl('ArtistProfile')}?p=${artist.slug || artist.id}`} className="group flex items-center gap-3 p-4 hover:bg-white/5 transition-colors">
+          <div className="w-10 h-10 flex-shrink-0">
+            <UserAvatar user={null} artistProfile={artist} size="full" className="rounded-full" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-white truncate text-sm">
+              {artist.profileType === 'Couple' && artist.partner_name ? `${artist.name} & ${artist.partner_name}` : artist.name}
+            </p>
+            <p className="text-xs text-white/40 uppercase tracking-wider truncate">{artist.category || 'Maestro'}</p>
+          </div>
+          <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowConfirm(true); }} disabled={removing}
+            className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-white/20 text-white/60 hover:text-white hover:border-white/40 text-xs font-medium transition-colors">
+            {removing ? <Loader2 className="w-3 h-3 animate-spin" /> : <><Heart className="w-3 h-3 fill-current" /><span>{t('following')}</span></>}
+          </button>
+        </Link>
+      </motion.div>
+
+      <AnimatePresence>
+        {showConfirm && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[200] flex items-center justify-center p-4"
+            onClick={() => setShowConfirm(false)}>
+            <div className="bg-[#1A1A1A] border border-white/10 rounded-2xl max-w-sm w-full p-6 text-center" onClick={e => e.stopPropagation()}>
+              <h3 className="text-xl font-bold text-white mb-2">{t('unfollowArtist')}</h3>
+              <p className="text-white/70 mb-6 text-sm">{t('leaveThisArtist')}</p>
+              <div className="flex gap-3 justify-center">
+                <Button variant="ghost" onClick={() => setShowConfirm(false)} className="text-white/60 hover:text-white flex-1">{t('stay')}</Button>
+                <Button onClick={() => { setShowConfirm(false); doUnfollow(); }} disabled={removing}
+                  className="bg-white text-black hover:bg-gray-200 rounded-full px-6 flex-1 font-bold">
+                  {removing ? <Loader2 className="w-4 h-4 animate-spin" /> : t('leave')}
+                </Button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
 
