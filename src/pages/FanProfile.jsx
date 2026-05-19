@@ -346,9 +346,8 @@ export default function FanProfile() {
         await supabase.from('notifications').delete().eq('artist_id', artist.id);
         await supabase.from('artists').delete().eq('id', artist.id);
       }
-      const { error } = await supabase.rpc('delete_user');
-      if (error) throw error;
       await supabase.auth.signOut();
+      await supabase.rpc('delete_user');
     },
     onSuccess: () => {
       toast.success(t('accountDeleted'));
