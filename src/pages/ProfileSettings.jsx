@@ -123,8 +123,8 @@ export default function ProfileSettings() {
       await supabase.from('follows').delete().eq('fan_user_id', email);
       await supabase.from('visit_requests').delete().eq('fan_user_id', email);
       await supabase.from('notifications').delete().eq('fan_user_id', email);
-      await supabase.auth.signOut();
       await supabase.rpc('delete_user');
+      await supabase.auth.signOut({ scope: 'local' });
     },
     onSuccess: () => {
       toast.success(t('accountDeleted'));
