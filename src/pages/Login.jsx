@@ -23,7 +23,7 @@ const FacebookIcon = () => (
 );
 
 export default function Login() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const [mode, setMode] = useState('signin'); // 'signin' | 'signup' | 'forgot'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -87,7 +87,7 @@ export default function Login() {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: /** @type {import('@supabase/supabase-js').Provider} */ (provider),
-        options: { redirectTo: window.location.origin + createPageUrl('Map') },
+        options: { redirectTo: `${window.location.origin}/${lang}/map` },
       });
       if (error) throw error;
     } catch (err) {
