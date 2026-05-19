@@ -109,7 +109,7 @@ export default function Login() {
     <div className="min-h-screen relative flex items-center justify-center px-4 py-10">
       {/* Full screen background */}
       <img src={bg.url} alt="" className="absolute inset-0 w-full h-full object-cover" />
-      <div className="absolute inset-0 bg-black/70" />
+      <div className="absolute inset-0 bg-black/30" />
 
       {/* Top bar */}
       <div className="fixed top-4 left-6 z-50">
@@ -119,34 +119,34 @@ export default function Login() {
         <LanguageSwitcher />
       </div>
 
-      {/* Card */}
-      <div className="relative z-10 w-full max-w-sm bg-black/80 backdrop-blur-md border border-white/10 rounded-2xl px-8 py-10">
+      {/* Card — light mode */}
+      <div className="relative z-10 w-full max-w-sm bg-white rounded-2xl px-8 py-10 shadow-2xl">
         <div className="w-full">
           {/* Heading */}
           {mode === 'forgot' ? (
             <div className="mb-8">
-              <button onClick={() => switchMode('signin')} className="text-white/40 hover:text-white text-sm mb-4 flex items-center gap-1 transition-colors">
+              <button onClick={() => switchMode('signin')} className="text-black/40 hover:text-black text-sm mb-4 flex items-center gap-1 transition-colors">
                 ← {t('backToLogin')}
               </button>
-              <h1 className="text-2xl font-bold text-white">{t('forgotPassword')}</h1>
+              <h1 className="text-2xl font-bold text-black">{t('forgotPassword')}</h1>
             </div>
           ) : (
             <div className="mb-8">
-              <h1 className="text-2xl font-bold text-white mb-2">
+              <h1 className="text-2xl font-bold text-black mb-2">
                 {mode === 'signin' ? t('signIn') : t('signUp')}
               </h1>
-              <p className="text-sm text-white/40">
+              <p className="text-sm text-black/40">
                 {mode === 'signin' ? (
                   <>
                     {t('noAccount')}{' '}
-                    <button onClick={() => switchMode('signup')} className="text-white hover:underline transition-colors">
+                    <button onClick={() => switchMode('signup')} className="text-black font-medium hover:underline transition-colors">
                       {t('signUp')}
                     </button>
                   </>
                 ) : (
                   <>
                     {t('alreadyHaveAccount')}{' '}
-                    <button onClick={() => switchMode('signin')} className="text-white hover:underline transition-colors">
+                    <button onClick={() => switchMode('signin')} className="text-black font-medium hover:underline transition-colors">
                       {t('signIn')}
                     </button>
                   </>
@@ -157,12 +157,12 @@ export default function Login() {
 
           {/* Feedback */}
           {error && (
-            <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+            <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm">
               {error}
             </div>
           )}
           {success && (
-            <div className="mb-4 p-3 rounded-xl bg-green-500/10 border border-green-500/20 text-green-400 text-sm">
+            <div className="mb-4 p-3 rounded-xl bg-green-50 border border-green-200 text-green-700 text-sm">
               {success}
             </div>
           )}
@@ -177,7 +177,7 @@ export default function Login() {
                 placeholder={t('emailPlaceholder')}
                 autoComplete="email"
                 required
-                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 text-sm focus:outline-none focus:border-white/30 transition-colors"
+                className="w-full px-4 py-3 rounded-xl bg-black/5 border border-black/10 text-black placeholder:text-black/30 text-sm focus:outline-none focus:border-black/30 transition-colors"
               />
 
               {mode !== 'forgot' && (
@@ -188,7 +188,7 @@ export default function Login() {
                   placeholder={t('passwordPlaceholder')}
                   autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
                   required
-                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 text-sm focus:outline-none focus:border-white/30 transition-colors"
+                  className="w-full px-4 py-3 rounded-xl bg-black/5 border border-black/10 text-black placeholder:text-black/30 text-sm focus:outline-none focus:border-black/30 transition-colors"
                 />
               )}
 
@@ -200,13 +200,13 @@ export default function Login() {
                   placeholder={t('confirmPasswordPlaceholder')}
                   autoComplete="new-password"
                   required
-                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 text-sm focus:outline-none focus:border-white/30 transition-colors"
+                  className="w-full px-4 py-3 rounded-xl bg-black/5 border border-black/10 text-black placeholder:text-black/30 text-sm focus:outline-none focus:border-black/30 transition-colors"
                 />
               )}
 
               {mode === 'signin' && (
                 <div className="text-right">
-                  <button type="button" onClick={() => switchMode('forgot')} className="text-xs text-white/30 hover:text-white/60 transition-colors">
+                  <button type="button" onClick={() => switchMode('forgot')} className="text-xs text-black/30 hover:text-black/60 transition-colors">
                     {t('forgotPassword')}
                   </button>
                 </div>
@@ -215,7 +215,7 @@ export default function Login() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 rounded-xl bg-white text-black font-semibold text-sm hover:bg-white/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full py-3 rounded-xl bg-black text-white font-semibold text-sm hover:bg-black/80 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" />
                   : mode === 'forgot' ? t('sendResetEmail')
@@ -229,15 +229,15 @@ export default function Login() {
           {mode !== 'forgot' && !success && (
             <>
               <div className="flex items-center gap-3 my-5">
-                <div className="flex-1 h-px bg-white/10" />
-                <span className="text-xs text-white/30">{t('orContinueWith')}</span>
-                <div className="flex-1 h-px bg-white/10" />
+                <div className="flex-1 h-px bg-black/10" />
+                <span className="text-xs text-black/30">{t('orContinueWith')}</span>
+                <div className="flex-1 h-px bg-black/10" />
               </div>
               <div className="space-y-2">
                 <button
                   onClick={() => handleOAuth('google')}
                   disabled={!!oauthLoading}
-                  className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm font-medium hover:bg-white/10 transition-all disabled:opacity-50"
+                  className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl bg-black/5 border border-black/10 text-black text-sm font-medium hover:bg-black/10 transition-all disabled:opacity-50"
                 >
                   {oauthLoading === 'google' ? <Loader2 className="w-4 h-4 animate-spin" /> : <GoogleIcon />}
                   {t('signInWithGoogle')}
@@ -245,7 +245,7 @@ export default function Login() {
                 <button
                   onClick={() => handleOAuth('facebook')}
                   disabled={!!oauthLoading}
-                  className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-sm font-medium hover:bg-white/10 transition-all disabled:opacity-50"
+                  className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl bg-black/5 border border-black/10 text-black text-sm font-medium hover:bg-black/10 transition-all disabled:opacity-50"
                 >
                   {oauthLoading === 'facebook' ? <Loader2 className="w-4 h-4 animate-spin" /> : <FacebookIcon />}
                   {t('signInWithFacebook')}
