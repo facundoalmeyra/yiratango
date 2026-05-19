@@ -5,7 +5,8 @@ import { useI18n } from '@/components/contexts/I18nContext';
 import { Loader2 } from 'lucide-react';
 import Logo from '@/components/ui/Logo';
 import LanguageSwitcher from '@/components/map/LanguageSwitcher';
-import TabBar from '@/components/ui/TabBar';
+
+const BG = 'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6985f5bb902ec2f8c9596a0d/50dcc913f_IMG_00752.png';
 
 const GoogleIcon = () => (
   <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
@@ -24,7 +25,7 @@ const FacebookIcon = () => (
 
 export default function Login() {
   const { t, lang } = useI18n();
-  const [mode, setMode] = useState('signin'); // 'signin' | 'signup' | 'forgot'
+  const [mode, setMode] = useState('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -37,6 +38,9 @@ export default function Login() {
     setMode(newMode);
     setError('');
     setSuccess('');
+    setEmail('');
+    setPassword('');
+    setConfirmPassword('');
   };
 
   const handleEmailAuth = async (/** @type {React.FormEvent} */ e) => {
@@ -44,18 +48,9 @@ export default function Login() {
     setError('');
     setSuccess('');
 
-    if (!email || !/\S+@\S+\.\S+/.test(email)) {
-      setError(t('invalidEmail'));
-      return;
-    }
-    if (mode !== 'forgot' && password.length < 6) {
-      setError(t('passwordTooShort'));
-      return;
-    }
-    if (mode === 'signup' && password !== confirmPassword) {
-      setError(t('passwordsDoNotMatch'));
-      return;
-    }
+    if (!email || !/\S+@\S+\.\S+/.test(email)) { setError(t('invalidEmail')); return; }
+    if (mode !== 'forgot' && password.length < 6) { setError(t('passwordTooShort')); return; }
+    if (mode === 'signup' && password !== confirmPassword) { setError(t('passwordsDoNotMatch')); return; }
 
     setLoading(true);
     try {
@@ -101,58 +96,74 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-black flex flex-col items-center justify-center px-4 py-8">
-      <div className="fixed top-4 right-4 z-50">
-        <LanguageSwitcher />
+    <div className="min-h-screen flex">
+      {/* Background image — hidden on mobile */}
+      <div className="hidden md:block flex-1 relative">
+        <img src={BG} alt="" className="absolute inset-0 w-full h-full object-cover" />
+        <div className="absolute inset-0 bg-black/50" />
+        <div className="absolute bottom-10 left-10">
+          <Logo width={120} height={48} className="" style={{}} />
+        </div>
       </div>
 
-      <div className="max-w-sm w-full">
-        <div className="flex justify-center mb-8">
-          <Logo width={140} height={56} className="" style={{}} />
+      {/* Form panel */}
+      <div className="w-full md:w-[420px] md:flex-shrink-0 min-h-screen bg-black flex flex-col justify-between px-8 py-10">
+        <div className="flex justify-between items-center">
+          <div className="md:hidden">
+            <Logo width={100} height={40} className="" style={{}} />
+          </div>
+          <div className="ml-auto">
+            <LanguageSwitcher />
+          </div>
         </div>
 
-        <div className="bg-[#0f0f0f] border border-white/10 rounded-2xl p-6">
-
-          {/* Mode toggle (signin / signup) */}
-          {mode !== 'forgot' && (
-            <TabBar
-              className="mb-6"
-              layoutId="loginModeTab"
-              activeTab={mode}
-              onChange={(key) => switchMode(/** @type {'signin'|'signup'} */ (key))}
-              tabs={[
-                { key: 'signin', label: t('signIn') },
-                { key: 'signup', label: t('signUp') },
-              ]}
-            />
-          )}
-
-          {/* Forgot password header */}
-          {mode === 'forgot' && (
-            <div className="mb-5">
-              <button
-                onClick={() => switchMode('signin')}
-                className="text-white/40 hover:text-white text-sm mb-3 flex items-center gap-1 transition-colors"
-              >
+        <div className="w-full max-w-sm mx-auto">
+          {/* Heading */}
+          {mode === 'forgot' ? (
+            <div className="mb-8">
+              <button onClick={() => switchMode('signin')} className="text-white/40 hover:text-white text-sm mb-4 flex items-center gap-1 transition-colors">
                 ← {t('backToLogin')}
               </button>
-              <p className="text-white font-semibold">{t('forgotPassword')}</p>
+              <h1 className="text-2xl font-bold text-white">{t('forgotPassword')}</h1>
+            </div>
+          ) : (
+            <div className="mb-8">
+              <h1 className="text-2xl font-bold text-white mb-2">
+                {mode === 'signin' ? t('signIn') : t('signUp')}
+              </h1>
+              <p className="text-sm text-white/40">
+                {mode === 'signin' ? (
+                  <>
+                    {t('noAccount')}{' '}
+                    <button onClick={() => switchMode('signup')} className="text-white hover:underline transition-colors">
+                      {t('signUp')}
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    {t('alreadyHaveAccount')}{' '}
+                    <button onClick={() => switchMode('signin')} className="text-white hover:underline transition-colors">
+                      {t('signIn')}
+                    </button>
+                  </>
+                )}
+              </p>
             </div>
           )}
 
-          {/* Feedback messages */}
+          {/* Feedback */}
           {error && (
-            <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center">
+            <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
               {error}
             </div>
           )}
           {success && (
-            <div className="mb-4 p-3 rounded-xl bg-green-500/10 border border-green-500/20 text-green-400 text-sm text-center">
+            <div className="mb-4 p-3 rounded-xl bg-green-500/10 border border-green-500/20 text-green-400 text-sm">
               {success}
             </div>
           )}
 
-          {/* Email / password form */}
+          {/* Form */}
           {!success && (
             <form onSubmit={handleEmailAuth} className="space-y-3">
               <input
@@ -191,11 +202,7 @@ export default function Login() {
 
               {mode === 'signin' && (
                 <div className="text-right">
-                  <button
-                    type="button"
-                    onClick={() => switchMode('forgot')}
-                    className="text-xs text-white/30 hover:text-white/60 transition-colors"
-                  >
+                  <button type="button" onClick={() => switchMode('forgot')} className="text-xs text-white/30 hover:text-white/60 transition-colors">
                     {t('forgotPassword')}
                   </button>
                 </div>
@@ -204,10 +211,9 @@ export default function Login() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 rounded-xl bg-white text-black font-semibold text-sm hover:bg-white/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-1"
+                className="w-full py-3 rounded-xl bg-white text-black font-semibold text-sm hover:bg-white/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                {loading
-                  ? <Loader2 className="w-4 h-4 animate-spin" />
+                {loading ? <Loader2 className="w-4 h-4 animate-spin" />
                   : mode === 'forgot' ? t('sendResetEmail')
                   : mode === 'signup' ? t('signUp')
                   : t('signIn')}
@@ -215,7 +221,7 @@ export default function Login() {
             </form>
           )}
 
-          {/* Social login */}
+          {/* Social */}
           {mode !== 'forgot' && !success && (
             <>
               <div className="flex items-center gap-3 my-5">
@@ -223,7 +229,6 @@ export default function Login() {
                 <span className="text-xs text-white/30">{t('orContinueWith')}</span>
                 <div className="flex-1 h-px bg-white/10" />
               </div>
-
               <div className="space-y-2">
                 <button
                   onClick={() => handleOAuth('google')}
@@ -233,7 +238,6 @@ export default function Login() {
                   {oauthLoading === 'google' ? <Loader2 className="w-4 h-4 animate-spin" /> : <GoogleIcon />}
                   {t('signInWithGoogle')}
                 </button>
-
                 <button
                   onClick={() => handleOAuth('facebook')}
                   disabled={!!oauthLoading}
@@ -242,10 +246,13 @@ export default function Login() {
                   {oauthLoading === 'facebook' ? <Loader2 className="w-4 h-4 animate-spin" /> : <FacebookIcon />}
                   {t('signInWithFacebook')}
                 </button>
-
               </div>
             </>
           )}
+        </div>
+
+        <div className="text-center text-xs text-white/20">
+          © {new Date().getFullYear()} Yira Tango
         </div>
       </div>
     </div>

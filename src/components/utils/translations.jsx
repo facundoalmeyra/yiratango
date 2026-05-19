@@ -297,6 +297,8 @@ export const translations = {
     // Login
     signIn: "Sign In",
     signUp: "Create Account",
+    noAccount: "New user?",
+    alreadyHaveAccount: "Already have an account?",
     emailPlaceholder: "your@email.com",
     passwordPlaceholder: "Password",
     confirmPasswordPlaceholder: "Confirm Password",
@@ -626,6 +628,8 @@ export const translations = {
     // Login
     signIn: "Iniciar Sesión",
     signUp: "Crear Cuenta",
+    noAccount: "¿Primera vez?",
+    alreadyHaveAccount: "¿Ya tenés cuenta?",
     emailPlaceholder: "tu@email.com",
     passwordPlaceholder: "Contraseña",
     confirmPasswordPlaceholder: "Confirmá la contraseña",
