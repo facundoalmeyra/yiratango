@@ -47,6 +47,7 @@ export default function ProfileSettings() {
   });
   const [editingDate, setEditingDate] = useState(null);
   const [dateToDelete, setDateToDelete] = useState(null);
+  const [datesTab, setDatesTab] = useState('upcoming');
   const editFormRef = useRef(null);
 
   const handleTabChange = (tab) => {
@@ -482,59 +483,75 @@ export default function ProfileSettings() {
                   <Plus className="w-4 h-4 mr-2" />{t('addDate')}
                 </Button>
               </div>
-              <Card className="bg-[#111111] border-white/5 overflow-hidden">
-                <div className="divide-y divide-white/5">
-                  {dates.length === 0 ? (
-                    <div className="text-center py-16">
-                      <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center">
-                        <Calendar className="w-8 h-8 text-white/20" />
+              {(() => {
+                const now = new Date(); now.setHours(0,0,0,0);
+                const upcoming = [...dates].filter(d => { const e = new Date(d.end_date || d.date); e.setHours(0,0,0,0); return e >= now; }).sort((a,b) => +new Date(a.start_date||a.date) - +new Date(b.start_date||b.date));
+                const past = [...dates].filter(d => { const e = new Date(d.end_date || d.date); e.setHours(0,0,0,0); return e < now; }).sort((a,b) => +new Date(b.start_date||b.date) - +new Date(a.start_date||a.date));
+                const activeDates = datesTab === 'upcoming' ? upcoming : past;
+                return (
+                  <>
+                    <TabBar
+                      className="mb-4"
+                      layoutId="datesSubTab"
+                      activeTab={datesTab}
+                      onChange={setDatesTab}
+                      tabs={[
+                        { key: 'upcoming', label: t('upcoming'), badge: upcoming.length || undefined },
+                        { key: 'past',     label: t('past'),     badge: past.length || undefined },
+                      ]}
+                    />
+                    <Card className="bg-[#111111] border-white/5 overflow-hidden">
+                      <div className="divide-y divide-white/5">
+                        {activeDates.length === 0 ? (
+                          <div className="text-center py-16">
+                            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center">
+                              <Calendar className="w-8 h-8 text-white/20" />
+                            </div>
+                            <h3 className="text-white font-medium mb-3">{t('noUpcomingDates')}</h3>
+                          </div>
+                        ) : (
+                          activeDates.map((date, index) => {
+                            const isActive = isTourOngoing(date);
+                            return (
+                              <motion.div key={date.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.05 }}
+                                className={`group p-4 flex items-center gap-4 hover:bg-white/5 transition-colors ${isActive ? 'bg-white/5' : ''}`}>
+                                <div className="w-16 text-center flex-shrink-0">
+                                  <div className="text-sm font-medium uppercase tracking-wide text-white/70">
+                                    {format(new Date(date.start_date || date.date), 'MMM', { locale: dateLocale })}
+                                  </div>
+                                  <div className="text-2xl font-bold text-white">
+                                    {format(new Date(date.start_date || date.date), 'dd')}
+                                  </div>
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <h4 className="font-semibold text-lg truncate text-white/90">
+                                    {date.city}, {date.country}
+                                  </h4>
+                                  <div className="flex items-center gap-3 text-sm text-white/70">
+                                    <span>
+                                      {date.start_date !== date.end_date
+                                        ? `${format(new Date(date.start_date), 'MMM d', { locale: dateLocale })} - ${format(new Date(date.end_date), 'MMM d, yyyy', { locale: dateLocale })}`
+                                        : format(new Date(date.start_date), 'MMM d, yyyy', { locale: dateLocale })}
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <button onClick={() => { setEditingDate(date); setShowDateForm(true); }} className="p-2 text-white/80 hover:text-white transition-colors">
+                                    <Pencil className="w-4 h-4" />
+                                  </button>
+                                  <button onClick={() => setDateToDelete(date)} className="p-2 text-white/80 hover:text-red-400 transition-colors">
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              </motion.div>
+                            );
+                          })
+                        )}
                       </div>
-                      <h3 className="text-white font-medium mb-3">{t('noUpcomingDates')}</h3>
-                      <p className="text-white/70 text-sm max-w-xs mx-auto">{t('noUpcomingToursEmpty')}</p>
-                    </div>
-                  ) : (
-                    [...dates].sort((a, b) => new Date(a.start_date || a.date) - new Date(b.start_date || b.date)).map((date, index) => {
-                      const isActive = isTourOngoing(date);
-                      const now = new Date(); now.setHours(0,0,0,0);
-                      const endDate = new Date(date.end_date || date.date); endDate.setHours(0,0,0,0);
-                      const isPast = endDate < now;
-                      return (
-                        <motion.div key={date.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.05 }}
-                          className={`group p-4 flex items-center gap-4 hover:bg-white/5 transition-colors ${isActive ? 'bg-white/5' : isPast ? 'bg-black/20' : ''} ${isPast ? 'opacity-40 grayscale' : ''}`}>
-                          <div className="w-16 text-center flex-shrink-0">
-                            <div className={`text-sm font-medium uppercase tracking-wide ${isPast ? 'text-white/50' : 'text-white/70'}`}>
-                              {format(new Date(date.start_date || date.date), 'MMM', { locale: dateLocale })}
-                            </div>
-                            <div className={`text-2xl font-bold ${isPast ? 'text-white/80 line-through decoration-white/40' : 'text-white'}`}>
-                              {format(new Date(date.start_date || date.date), 'dd')}
-                            </div>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h4 className={`font-semibold text-lg truncate ${isActive ? 'text-white' : isPast ? 'text-white/80 line-through decoration-white/40' : 'text-white/90'}`}>
-                              {date.city}, {date.country}
-                            </h4>
-                            <div className="flex items-center gap-3 text-sm text-white/70">
-                              <span className={isPast ? 'line-through decoration-white/40' : ''}>
-                                {date.start_date !== date.end_date
-                                  ? `${format(new Date(date.start_date), 'MMM d', { locale: dateLocale })} - ${format(new Date(date.end_date), 'MMM d, yyyy', { locale: dateLocale })}`
-                                  : format(new Date(date.start_date), 'MMM d, yyyy', { locale: dateLocale })}
-                              </span>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <button onClick={() => { setEditingDate(date); setShowDateForm(true); }} className="p-2 text-white/80 hover:text-white transition-colors">
-                              <Pencil className="w-4 h-4" />
-                            </button>
-                            <button onClick={() => setDateToDelete(date)} className="p-2 text-white/80 hover:text-red-400 transition-colors">
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </motion.div>
-                      );
-                    })
-                  )}
-                </div>
-              </Card>
+                    </Card>
+                  </>
+                );
+              })()}
             </section>
           )}
 
