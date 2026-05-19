@@ -70,7 +70,12 @@ export default function Login() {
         window.location.href = `/${lang}/map`;
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('loginError'));
+      const msg = err instanceof Error ? err.message : '';
+      if (msg.toLowerCase().includes('invalid login') || msg.toLowerCase().includes('invalid credentials') || msg.toLowerCase().includes('email not confirmed')) {
+        setError(t('wrongEmailOrPassword'));
+      } else {
+        setError(t('loginError'));
+      }
     } finally {
       setLoading(false);
     }

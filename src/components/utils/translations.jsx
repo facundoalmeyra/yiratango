@@ -313,6 +313,7 @@ export const translations = {
     checkEmailConfirm: "Account created! Check your email to confirm before signing in.",
     invalidEmail: "Please enter a valid email address",
     loginError: "Something went wrong. Please try again.",
+    wrongEmailOrPassword: "Email or password doesn't match. Double-check and try again.",
     passwordTooShort: "Password must be at least 6 characters",
 
     // Claim Profile
@@ -644,6 +645,7 @@ export const translations = {
     checkEmailConfirm: "¡Cuenta creada! Revisá tu email para confirmar antes de iniciar sesión.",
     invalidEmail: "Ingresá un email válido",
     loginError: "Algo salió mal. Intentalo de nuevo.",
+    wrongEmailOrPassword: "El email o la contraseña no coinciden. Revisá y volvé a intentar.",
     passwordTooShort: "La contraseña debe tener al menos 6 caracteres",
 
     // Claim Profile
