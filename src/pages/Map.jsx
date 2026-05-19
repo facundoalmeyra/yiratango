@@ -215,6 +215,19 @@ export default function Map() {
   });
 
   useEffect(() => {
+    const saved = sessionStorage.getItem('yira_restore_cluster');
+    if (saved && artists.length > 0) {
+      sessionStorage.removeItem('yira_restore_cluster');
+      const ids = JSON.parse(saved);
+      const cluster = artists.filter(a => ids.includes(a.id));
+      if (cluster.length > 0) {
+        setSelectedCluster(cluster);
+        setIsClusterSheetOpen(true);
+      }
+    }
+  }, [artists]);
+
+  useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const paramId = params.get('m') || params.get('maestroId') || params.get('artistId');
 
@@ -397,21 +410,24 @@ export default function Map() {
   }, [artists, activeContinent, activeCountry, tours]);
 
   const handleArtistSelect = (artist) => {
-    setSelectedArtist(artist);
-    setIsSheetOpen(true);
-    setIsClusterSheetOpen(false);
+    navigate(`/${lang}/ArtistProfile?p=${artist.slug || artist.id}`);
   };
 
-  const handleClusterSelect = (artists) => {
-    setSelectedCluster(artists);
+  const handleClusterSelect = (clusterArtists) => {
+    setSelectedCluster(clusterArtists);
     setIsClusterSheetOpen(true);
+  };
+
+  const handleClusterArtistSelect = (artist) => {
+    sessionStorage.setItem('yira_restore_cluster', JSON.stringify((selectedCluster || []).map(a => a.id)));
+    navigate(`/${lang}/ArtistProfile?p=${artist.slug || artist.id}`);
   };
 
   const handleSearchSelect = (result) => {
     setSelectedArtist(result);
     setZoomToArtistTrigger(prev => prev + 1);
     if (result.type !== 'place') {
-      setTimeout(() => setIsSheetOpen(true), 1100);
+      setTimeout(() => navigate(`/${lang}/ArtistProfile?p=${result.slug || result.id}`), 1100);
     }
   };
 
@@ -627,7 +643,7 @@ export default function Map() {
           setIsClusterSheetOpen(false);
           setSelectedCluster(null);
         }}
-        onArtistSelect={handleArtistSelect}
+        onArtistSelect={handleClusterArtistSelect}
       />
 
       <ContinentSelectionModal 
