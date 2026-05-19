@@ -17,7 +17,7 @@ export default function ChangePasswordSection({ user }) {
 
   // Only show for email/password accounts. Hide for Google, Apple, Facebook, etc.
   // We show it ONLY when provider is explicitly 'email'. Unknown/missing provider = hide (safe default).
-  if (user?.provider !== 'email') return null;
+  if (user?.app_metadata?.provider !== 'email') return null;
 
   const isValid = currentPassword.length >= 6 && newPassword.length >= 6 && newPassword === confirmPassword;
 
