@@ -135,23 +135,23 @@ export default function Login() {
               <h1 className="text-2xl font-bold text-black mb-2">
                 {mode === 'signin' ? t('signIn') : t('signUp')}
               </h1>
-              <p className="text-sm text-black/40">
+              <div className="flex items-center gap-2 flex-wrap">
                 {mode === 'signin' ? (
                   <>
-                    {t('noAccount')}{' '}
-                    <button onClick={() => switchMode('signup')} className="text-black font-medium hover:underline transition-colors">
+                    <span className="text-sm text-black/40">{t('noAccount')}</span>
+                    <button onClick={() => switchMode('signup')} className="text-xs font-semibold text-black border border-black/20 hover:border-black/40 hover:bg-black/5 px-3 py-1.5 rounded-full transition-colors">
                       {t('signUp')}
                     </button>
                   </>
                 ) : (
                   <>
-                    {t('alreadyHaveAccount')}{' '}
-                    <button onClick={() => switchMode('signin')} className="text-black font-medium hover:underline transition-colors">
+                    <span className="text-sm text-black/40">{t('alreadyHaveAccount')}</span>
+                    <button onClick={() => switchMode('signin')} className="text-xs font-semibold text-black border border-black/20 hover:border-black/40 hover:bg-black/5 px-3 py-1.5 rounded-full transition-colors">
                       {t('signIn')}
                     </button>
                   </>
                 )}
-              </p>
+              </div>
             </div>
           )}
 
