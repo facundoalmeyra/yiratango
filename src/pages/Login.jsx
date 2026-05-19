@@ -9,9 +9,9 @@ import { Link } from 'react-router-dom';
 import LanguageSwitcher from '@/components/map/LanguageSwitcher';
 
 const BGS = [
-  'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6985f5bb902ec2f8c9596a0d/a60633894_d1.png',
-  'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6985f5bb902ec2f8c9596a0d/af3bc4fe0_d3.png',
-  'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6985f5bb902ec2f8c9596a0d/60db9f739_d2.png',
+  'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6985f5bb902ec2f8c9596a0d/9838903fb_Group313.png',
+  'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6985f5bb902ec2f8c9596a0d/5deb0543e_2025_06_22_Festival-Lent_Piazzolleky-Tango-Orquesta_foto-Zan-Osim-7.jpg',
+  'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6985f5bb902ec2f8c9596a0d/5658e9c36_DSCF4496-e1667251122453.jpg',
 ];
 
 const GoogleIcon = () => (
