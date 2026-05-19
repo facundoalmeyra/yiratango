@@ -90,14 +90,15 @@ export default function FollowButton({ artistId, className, theme = 'dark', conf
       <Button
         onClick={handleFollowClick}
         disabled={isLoading}
+        variant={isFollowing ? 'ghost' : 'default'}
         className={`w-max px-5 rounded-full h-9 md:h-10 text-xs md:text-sm font-semibold transition-all shadow-lg flex items-center justify-center gap-2 ${
           isFollowing
             ? theme === 'dark'
-                ? 'bg-transparent border border-white text-white hover:bg-white/10'
-                : 'bg-transparent border border-black text-black hover:bg-black/10'
+                ? 'border border-white text-white hover:bg-white/10 hover:text-white'
+                : 'border border-black text-black hover:bg-black/10 hover:text-black'
             : theme === 'dark'
-                ? 'bg-white border-0 text-black hover:bg-white/90'
-                : 'bg-black border-0 text-white hover:bg-black/90'
+                ? 'bg-white text-black hover:bg-white/90 hover:text-black'
+                : 'bg-black text-white hover:bg-black/90 hover:text-white'
         } ${className || ''}`}
       >
         {isLoading ? (
