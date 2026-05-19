@@ -66,13 +66,17 @@ export default function Login() {
         if (error) throw error;
         setSuccess(t('resetEmailSent'));
       } else if (mode === 'signup') {
-        const { error } = await supabase.auth.signUp({ email, password });
+        const { data, error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
-        setSuccess(t('checkEmailConfirm'));
+        if (data.session) {
+          window.location.href = `/${lang}/map`;
+        } else {
+          setSuccess(t('checkEmailConfirm'));
+        }
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        window.location.href = createPageUrl('Map');
+        window.location.href = `/${lang}/map`;
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : t('loginError'));
