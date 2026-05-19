@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react';
 import { supabase } from '@/api/supabaseClient';
-import { createPageUrl } from '@/utils';
 import { useI18n } from '@/components/contexts/I18nContext';
 import { useSearchParams } from 'react-router-dom';
 import { Loader2, Camera } from 'lucide-react';
@@ -65,7 +64,7 @@ export default function Login() {
     try {
       if (mode === 'forgot') {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: window.location.origin + createPageUrl('Map'),
+          redirectTo: `${window.location.origin}/${lang}/map`,
         });
         if (error) throw error;
         setSuccess(t('resetEmailSent'));

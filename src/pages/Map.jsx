@@ -107,7 +107,13 @@ export default function Map() {
       sessionStorage.removeItem('yira_account_deleted');
       toast.success(t('accountDeleted'));
     }
-  }, []);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        navigate(`/${lang}/ProfileSettings?tab=account&changePassword=true`);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [lang, navigate]);
 
   // Detect mobile/desktop and preload background
   useEffect(() => {

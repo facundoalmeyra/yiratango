@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { KeyRound, Loader2, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,7 +10,18 @@ import { AnimatePresence, motion } from 'framer-motion';
 
 export default function ChangePasswordSection({ user }) {
   const { t } = useI18n();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [open, setOpen] = useState(false);
+  const [isRecovery, setIsRecovery] = useState(false);
+
+  useEffect(() => {
+    if (searchParams.get('changePassword') === 'true') {
+      setOpen(true);
+      setIsRecovery(true);
+      searchParams.delete('changePassword');
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, []);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -20,7 +32,7 @@ export default function ChangePasswordSection({ user }) {
 
   if (user?.app_metadata?.provider !== 'email') return null;
 
-  const isValid = currentPassword.length >= 6 && newPassword.length >= 6 && newPassword === confirmPassword;
+  const isValid = (isRecovery || currentPassword.length >= 6) && newPassword.length >= 6 && newPassword === confirmPassword;
 
   const handleOpen = () => {
     setCurrentPassword(''); setNewPassword(''); setConfirmPassword('');
@@ -37,11 +49,13 @@ export default function ChangePasswordSection({ user }) {
     setIsSaving(true);
     setError('');
     try {
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: user.email,
-        password: currentPassword,
-      });
-      if (signInError) { setError(t('currentPasswordIncorrect')); return; }
+      if (!isRecovery) {
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: user.email,
+          password: currentPassword,
+        });
+        if (signInError) { setError(t('currentPasswordIncorrect')); return; }
+      }
 
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) { setError(t('passwordChangeFailed')); return; }
@@ -94,20 +108,22 @@ export default function ChangePasswordSection({ user }) {
               )}
 
               <form onSubmit={handleSubmit} className="space-y-3">
-                <div className="relative">
-                  <Input
-                    type={showCurrent ? 'text' : 'password'}
-                    value={currentPassword}
-                    onChange={e => setCurrentPassword(e.target.value)}
-                    placeholder={t('currentPassword')}
-                    className="bg-white/5 border-white/10 text-white pr-10"
-                    autoComplete="current-password"
-                  />
-                  <button type="button" onClick={() => setShowCurrent(v => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70">
-                    {showCurrent ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
+                {!isRecovery && (
+                  <div className="relative">
+                    <Input
+                      type={showCurrent ? 'text' : 'password'}
+                      value={currentPassword}
+                      onChange={e => setCurrentPassword(e.target.value)}
+                      placeholder={t('currentPassword')}
+                      className="bg-white/5 border-white/10 text-white pr-10"
+                      autoComplete="current-password"
+                    />
+                    <button type="button" onClick={() => setShowCurrent(v => !v)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70">
+                      {showCurrent ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                )}
 
                 <div className="relative">
                   <Input
