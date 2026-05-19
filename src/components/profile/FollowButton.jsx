@@ -16,6 +16,7 @@ export default function FollowButton({ artistId, className, theme = 'dark' }) {
   const [user, setUser] = useState(null);
   const [loadingUser, setLoadingUser] = useState(true);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showUnfollowModal, setShowUnfollowModal] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser()
@@ -74,7 +75,8 @@ export default function FollowButton({ artistId, className, theme = 'dark' }) {
       return;
     }
     if (isFollowing) {
-      unfollowMutation.mutate();
+      setShowUnfollowModal(true);
+      return;
     } else {
       followMutation.mutate();
     }
@@ -113,6 +115,28 @@ export default function FollowButton({ artistId, className, theme = 'dark' }) {
       </Button>
 
       <AnimatePresence>
+        {showUnfollowModal && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[200] flex items-center justify-center p-4"
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowUnfollowModal(false); }}
+          >
+            <div className="bg-[#1A1A1A] border border-white/10 rounded-2xl max-w-sm w-full p-6 text-center" onClick={(e) => e.stopPropagation()}>
+              <h3 className="text-xl font-bold text-white mb-2">{t('unfollowArtist')}</h3>
+              <p className="text-white/70 mb-6 text-sm">{t('leaveThisArtist')}</p>
+              <div className="flex gap-3 justify-center">
+                <Button variant="ghost" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowUnfollowModal(false); }}
+                  className="text-white/60 hover:text-white flex-1">{t('stay')}</Button>
+                <Button
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowUnfollowModal(false); unfollowMutation.mutate(); }}
+                  disabled={unfollowMutation.isPending}
+                  className="bg-white text-black hover:bg-gray-200 rounded-full px-6 flex-1 font-bold">
+                  {unfollowMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : t('leave')}
+                </Button>
+              </div>
+            </div>
+          </motion.div>
+        )}
         {showLoginModal && (
           <motion.div
             initial={{ opacity: 0 }}
