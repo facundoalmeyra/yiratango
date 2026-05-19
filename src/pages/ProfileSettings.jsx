@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft, MapPin, Calendar, Plus, Trash2,
-  Loader2, Pencil, Clock, Plane, AlertCircle, Copy, ExternalLink, MessageCircle, User as UserIcon, Map
+  Loader2, Pencil, Clock, Plane, AlertCircle, Copy, ExternalLink, MessageCircle, User as UserIcon, Map, Heart, Users
 } from 'lucide-react';
 import TabBar from '@/components/ui/TabBar';
 import SEO from '@/components/seo/SEO';
@@ -26,6 +26,38 @@ import ArtistVisitRequests from '@/components/profile/ArtistVisitRequests';
 import { useI18n } from '@/components/contexts/I18nContext';
 import LanguageSwitcher from '@/components/map/LanguageSwitcher';
 import NotificationBell from '@/components/notifications/NotificationBell';
+
+/**
+ * @param {{ artist: any, followId: string, index: number, t: Function, queryClient: any }} props
+ */
+function FollowRow({ artist, followId, index, t, queryClient }) {
+  const [removing, setRemoving] = useState(false);
+  const handleUnfollow = async (/** @type {React.MouseEvent} */ e) => {
+    e.preventDefault(); e.stopPropagation();
+    setRemoving(true);
+    await supabase.from('follows').delete().eq('id', followId);
+    queryClient.invalidateQueries({ queryKey: ['artist_follows'] });
+  };
+  return (
+    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.04 }}>
+      <Link to={`${createPageUrl('ArtistProfile')}?p=${artist.slug || artist.id}`} className="group flex items-center gap-3 p-4 hover:bg-white/5 transition-colors">
+        <div className="w-10 h-10 flex-shrink-0">
+          <UserAvatar user={null} artistProfile={artist} size="full" className="rounded-full" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-semibold text-white truncate text-sm">
+            {artist.profileType === 'Couple' && artist.partner_name ? `${artist.name} & ${artist.partner_name}` : artist.name}
+          </p>
+          <p className="text-xs text-white/40 uppercase tracking-wider truncate">{artist.category || 'Maestro'}</p>
+        </div>
+        <button onClick={handleUnfollow} disabled={removing}
+          className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-white/20 text-white/60 hover:text-white hover:border-white/40 text-xs font-medium transition-colors">
+          {removing ? <Loader2 className="w-3 h-3 animate-spin" /> : <><Heart className="w-3 h-3 fill-current" /><span>{t('following')}</span></>}
+        </button>
+      </Link>
+    </motion.div>
+  );
+}
 
 export default function ProfileSettings() {
   const { t, lang } = useI18n();
@@ -95,6 +127,18 @@ export default function ProfileSettings() {
       return all.filter(t => { if (seen.has(t.id)) return false; seen.add(t.id); return true; });
     },
     enabled: !!artistProfile?.id,
+  });
+
+  const { data: followedArtists = [] } = useQuery({
+    queryKey: ['artist_follows', user?.email],
+    queryFn: async () => {
+      const { data: followRows } = await supabase.from('follows').select('*').eq('fan_user_id', user.email);
+      if (!followRows?.length) return [];
+      const ids = followRows.map(f => f.artist_id);
+      const { data: artistRows } = await supabase.from('artists').select('*').in('id', ids);
+      return (followRows || []).map(f => ({ follow: f, artist: (artistRows || []).find(a => a.id === f.artist_id) })).filter(x => x.artist);
+    },
+    enabled: !!user?.email,
   });
 
   const generateShortId = () => Math.random().toString(36).substring(2, 7);
@@ -467,9 +511,10 @@ export default function ProfileSettings() {
           activeTab={activeTab}
           onChange={handleTabChange}
           tabs={[
-            { key: 'dates',    icon: <Calendar className="w-4 h-4" />,    label: t('myDates') },
-            { key: 'requests', icon: <MessageCircle className="w-4 h-4" />, label: t('requestsTab') },
-            { key: 'account',  icon: <UserIcon className="w-4 h-4" />,     label: t('profile') },
+            { key: 'dates',     icon: <Calendar className="w-4 h-4" />,     label: t('myDates') },
+            { key: 'following', icon: <Heart className="w-4 h-4" />,        label: t('following'), badge: followedArtists.length || undefined },
+            { key: 'requests',  icon: <MessageCircle className="w-4 h-4" />, label: t('requestsTab') },
+            { key: 'account',   icon: <UserIcon className="w-4 h-4" />,      label: t('profile') },
           ]}
         />
 
@@ -553,6 +598,26 @@ export default function ProfileSettings() {
                   </>
                 );
               })()}
+            </section>
+          )}
+
+          {activeTab === 'following' && (
+            <section>
+              <Card className="bg-[#111111] border-white/5 overflow-hidden">
+                <div className="divide-y divide-white/5">
+                  {followedArtists.length === 0 ? (
+                    <div className="text-center py-16">
+                      <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center">
+                        <Users className="w-8 h-8 text-white/20" />
+                      </div>
+                      <h3 className="text-white font-medium mb-1">{t('notFollowingAnyone')}</h3>
+                      <p className="text-white/50 text-sm">{t('exploreMapToFind')}</p>
+                    </div>
+                  ) : followedArtists.map(({ follow, artist }, index) => (
+                    <FollowRow key={follow.id} artist={artist} followId={follow.id} index={index} t={t} queryClient={queryClient} />
+                  ))}
+                </div>
+              </Card>
             </section>
           )}
 
