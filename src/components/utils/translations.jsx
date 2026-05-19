@@ -287,6 +287,7 @@ export const translations = {
 
     // Change Password
     changePassword: "Change Password",
+    change: "Change",
     currentPassword: "Current password",
     newPassword: "New password",
     confirmNewPassword: "Confirm new password",
@@ -619,6 +620,7 @@ export const translations = {
 
     // Change Password
     changePassword: "Cambiar Contraseña",
+    change: "Cambiar",
     currentPassword: "Contraseña actual",
     newPassword: "Nueva contraseña",
     confirmNewPassword: "Confirmar nueva contraseña",

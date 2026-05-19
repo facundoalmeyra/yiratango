@@ -655,6 +655,7 @@ export default function ProfileSettings() {
                     formData={editForm}
                     onSave={(data) => updateArtistMutation.mutate({ id: artistProfile.id, data })}
                     onDelete={() => deleteArtistMutation.mutate(artistProfile.id)}
+                    onAvatarChange={(url) => setArtistProfile(prev => ({ ...prev, avatar_url: url }))}
                     isSaving={updateArtistMutation.isPending}
                     isMandatory={false}
                   />

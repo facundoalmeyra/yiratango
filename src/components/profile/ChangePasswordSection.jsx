@@ -1,136 +1,155 @@
 import React, { useState } from 'react';
-import { KeyRound, Loader2, Eye, EyeOff, Check } from 'lucide-react';
+import { KeyRound, Loader2, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/api/supabaseClient';
 import { toast } from 'sonner';
 import { useI18n } from '@/components/contexts/I18nContext';
+import { AnimatePresence, motion } from 'framer-motion';
 
 export default function ChangePasswordSection({ user }) {
   const { t } = useI18n();
+  const [open, setOpen] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState('');
 
-  // Only show for email/password accounts. Hide for Google, Apple, Facebook, etc.
-  // We show it ONLY when provider is explicitly 'email'. Unknown/missing provider = hide (safe default).
   if (user?.app_metadata?.provider !== 'email') return null;
 
   const isValid = currentPassword.length >= 6 && newPassword.length >= 6 && newPassword === confirmPassword;
 
+  const handleOpen = () => {
+    setCurrentPassword(''); setNewPassword(''); setConfirmPassword('');
+    setError(''); setOpen(true);
+  };
+
+  const handleClose = () => {
+    setOpen(false); setError('');
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!isValid) return;
-
     setIsSaving(true);
+    setError('');
     try {
-      // Verify current password by attempting to re-authenticate
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: user.email,
         password: currentPassword,
       });
+      if (signInError) { setError(t('currentPasswordIncorrect')); return; }
 
-      if (signInError) {
-        toast.error(t('currentPasswordIncorrect'));
-        setIsSaving(false);
-        return;
-      }
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) { setError(t('passwordChangeFailed')); return; }
 
-      // Update password
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword
-      });
-
-      if (error) {
-        toast.error(t('passwordChangeFailed'));
-      } else {
-        toast.success(t('passwordChanged'));
-        setCurrentPassword('');
-        setNewPassword('');
-        setConfirmPassword('');
-      }
-    } catch (err) {
-      toast.error(t('passwordChangeFailed'));
+      toast.success(t('passwordChanged'));
+      handleClose();
+    } catch {
+      setError(t('passwordChangeFailed'));
     } finally {
       setIsSaving(false);
     }
   };
 
   return (
-    <div className="mt-8 pt-6 border-t border-white/10">
-      <div className="flex items-center gap-2 mb-4">
-        <KeyRound className="w-4 h-4 text-white/50" />
-        <h4 className="text-sm font-medium text-white/70">{t('changePassword')}</h4>
+    <>
+      <div className="flex items-center justify-between py-4 border-t border-white/10 mt-4">
+        <div className="flex items-center gap-3">
+          <KeyRound className="w-4 h-4 text-white/40" />
+          <div>
+            <p className="text-sm text-white/70">{t('changePassword')}</p>
+            <p className="text-sm text-white/30 tracking-widest mt-0.5">••••••••</p>
+          </div>
+        </div>
+        <button
+          onClick={handleOpen}
+          className="text-xs text-white/50 hover:text-white border border-white/10 hover:border-white/30 px-3 py-1.5 rounded-full transition-colors"
+        >
+          {t('change')}
+        </button>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-3">
-        <div className="relative">
-          <Input
-            type={showCurrent ? 'text' : 'password'}
-            value={currentPassword}
-            onChange={(e) => setCurrentPassword(e.target.value)}
-            placeholder={t('currentPassword')}
-            className="bg-white/5 border-white/10 text-white pr-10"
-            autoComplete="current-password"
-          />
-          <button
-            type="button"
-            onClick={() => setShowCurrent(v => !v)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70"
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[300] flex items-center justify-center p-4"
+            onClick={handleClose}
           >
-            {showCurrent ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-          </button>
-        </div>
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-[#1A1A1A] border border-white/10 rounded-2xl max-w-sm w-full p-6"
+              onClick={e => e.stopPropagation()}
+            >
+              <h3 className="text-lg font-bold text-white mb-5">{t('changePassword')}</h3>
 
-        <div className="relative">
-          <Input
-            type={showNew ? 'text' : 'password'}
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            placeholder={t('newPassword')}
-            className="bg-white/5 border-white/10 text-white pr-10"
-            autoComplete="new-password"
-          />
-          <button
-            type="button"
-            onClick={() => setShowNew(v => !v)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70"
-          >
-            {showNew ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-          </button>
-        </div>
+              {error && (
+                <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+                  {error}
+                </div>
+              )}
 
-        <Input
-          type="password"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          placeholder={t('confirmNewPassword')}
-          className="bg-white/5 border-white/10 text-white"
-          autoComplete="new-password"
-        />
+              <form onSubmit={handleSubmit} className="space-y-3">
+                <div className="relative">
+                  <Input
+                    type={showCurrent ? 'text' : 'password'}
+                    value={currentPassword}
+                    onChange={e => setCurrentPassword(e.target.value)}
+                    placeholder={t('currentPassword')}
+                    className="bg-white/5 border-white/10 text-white pr-10"
+                    autoComplete="current-password"
+                  />
+                  <button type="button" onClick={() => setShowCurrent(v => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70">
+                    {showCurrent ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
 
-        {confirmPassword && newPassword !== confirmPassword && (
-          <p className="text-xs text-red-400">{t('passwordsDoNotMatch')}</p>
+                <div className="relative">
+                  <Input
+                    type={showNew ? 'text' : 'password'}
+                    value={newPassword}
+                    onChange={e => setNewPassword(e.target.value)}
+                    placeholder={t('newPassword')}
+                    className="bg-white/5 border-white/10 text-white pr-10"
+                    autoComplete="new-password"
+                  />
+                  <button type="button" onClick={() => setShowNew(v => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70">
+                    {showNew ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+
+                <Input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={e => setConfirmPassword(e.target.value)}
+                  placeholder={t('confirmNewPassword')}
+                  className="bg-white/5 border-white/10 text-white"
+                  autoComplete="new-password"
+                />
+
+                {confirmPassword && newPassword !== confirmPassword && (
+                  <p className="text-xs text-red-400">{t('passwordsDoNotMatch')}</p>
+                )}
+
+                <div className="flex gap-3 pt-2">
+                  <Button type="button" variant="ghost" onClick={handleClose} className="flex-1 text-white/60 hover:text-white">
+                    {t('cancel')}
+                  </Button>
+                  <Button type="submit" disabled={!isValid || isSaving} className="flex-1 bg-white text-black hover:bg-white/90">
+                    {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : t('changePassword')}
+                  </Button>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
         )}
-
-        <Button
-          type="submit"
-          disabled={!isValid || isSaving}
-          className="w-full bg-white/10 hover:bg-white/20 text-white border border-white/10"
-        >
-          {isSaving ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <>
-              <Check className="w-4 h-4 mr-1" />
-              {t('changePassword')}
-            </>
-          )}
-        </Button>
-      </form>
-    </div>
+      </AnimatePresence>
+    </>
   );
 }

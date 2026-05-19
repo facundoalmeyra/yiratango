@@ -9,12 +9,13 @@ import { useQuery } from '@tanstack/react-query';
 import { useI18n } from '@/components/contexts/I18nContext';
 import { resizeToAvatar } from '@/components/utils/imageUtils';
 
-const EditProfileForm = memo(forwardRef(function EditProfileForm({ 
-  formData, 
-  onSave, 
+const EditProfileForm = memo(forwardRef(function EditProfileForm({
+  formData,
+  onSave,
   onDelete,
-  isSaving, 
-  isMandatory = false 
+  onAvatarChange,
+  isSaving,
+  isMandatory = false
 }, ref) {
   const { t } = useI18n();
   const [localFormData, setLocalFormData] = useState(formData);
@@ -149,6 +150,7 @@ const EditProfileForm = memo(forwardRef(function EditProfileForm({
         .getPublicUrl(fileName);
 
       setLocalFormData({ ...localFormData, avatar_url: publicUrl });
+      if (onAvatarChange) onAvatarChange(publicUrl);
 
       if (localFormData.id && !isMandatory) {
         const { error } = await supabase
