@@ -493,6 +493,7 @@ export default function ProfileSettings() {
                     <TabBar
                       className="mb-4"
                       layoutId="datesSubTab"
+                      fullWidth={false}
                       activeTab={datesTab}
                       onChange={setDatesTab}
                       tabs={[
