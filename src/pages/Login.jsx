@@ -3,15 +3,15 @@ import { supabase } from '@/api/supabaseClient';
 import { createPageUrl } from '@/utils';
 import { useI18n } from '@/components/contexts/I18nContext';
 import { useSearchParams } from 'react-router-dom';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Camera } from 'lucide-react';
 import Logo from '@/components/ui/Logo';
 import { Link } from 'react-router-dom';
 import LanguageSwitcher from '@/components/map/LanguageSwitcher';
 
 const BGS = [
-  'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6985f5bb902ec2f8c9596a0d/9838903fb_Group313.png',
-  'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6985f5bb902ec2f8c9596a0d/5deb0543e_2025_06_22_Festival-Lent_Piazzolleky-Tango-Orquesta_foto-Zan-Osim-7.jpg',
-  'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6985f5bb902ec2f8c9596a0d/5658e9c36_DSCF4496-e1667251122453.jpg',
+  { url: 'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6985f5bb902ec2f8c9596a0d/9838903fb_Group313.png', credit: '@Peter Forret', link: 'https://www.tangopaparazzo.com/' },
+  { url: 'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6985f5bb902ec2f8c9596a0d/5deb0543e_2025_06_22_Festival-Lent_Piazzolleky-Tango-Orquesta_foto-Zan-Osim-7.jpg', credit: '@Žan Osim', link: 'https://osimzan.si/' },
+  { url: 'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6985f5bb902ec2f8c9596a0d/5658e9c36_DSCF4496-e1667251122453.jpg', credit: '@Tango Vinyl', link: 'https://www.instagram.com/tangovinyl/' },
 ];
 
 const GoogleIcon = () => (
@@ -33,6 +33,7 @@ export default function Login() {
   const { t, lang } = useI18n();
   const [searchParams] = useSearchParams();
   const bg = useMemo(() => BGS[Math.floor(Math.random() * BGS.length)], []);
+
   const [mode, setMode] = useState(() => searchParams.get('mode') === 'signup' ? 'signup' : 'signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -107,7 +108,7 @@ export default function Login() {
   return (
     <div className="min-h-screen relative flex items-center justify-center px-4 py-10">
       {/* Full screen background */}
-      <img src={bg} alt="" className="absolute inset-0 w-full h-full object-cover" />
+      <img src={bg.url} alt="" className="absolute inset-0 w-full h-full object-cover" />
       <div className="absolute inset-0 bg-black/70" />
 
       {/* Top bar */}
@@ -254,6 +255,17 @@ export default function Login() {
           )}
         </div>
       </div>
+
+      <a
+        href={bg.link}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed bottom-4 right-4 z-50 flex items-center gap-1.5 text-[10px] text-white/80 hover:text-white transition-colors bg-black/20 backdrop-blur-sm px-2 py-1 rounded-md"
+        style={{ fontFamily: "'IBM Plex Mono', monospace" }}
+      >
+        <Camera className="w-3 h-3" />
+        {bg.credit}
+      </a>
     </div>
   );
 }
