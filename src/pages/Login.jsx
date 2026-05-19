@@ -5,6 +5,7 @@ import { useI18n } from '@/components/contexts/I18nContext';
 import { useSearchParams } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import Logo from '@/components/ui/Logo';
+import { Link } from 'react-router-dom';
 import LanguageSwitcher from '@/components/map/LanguageSwitcher';
 
 const BGS = [
@@ -112,7 +113,7 @@ export default function Login() {
 
       {/* Top bar */}
       <div className="fixed top-4 left-6 z-50">
-        <Logo width={100} height={40} className="" style={{}} />
+        <Link to={`/${lang}/map`}><Logo width={100} height={40} className="" style={{}} /></Link>
       </div>
       <div className="fixed top-4 right-6 z-50">
         <LanguageSwitcher />
