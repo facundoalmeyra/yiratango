@@ -143,19 +143,13 @@ const ClusterMarker3D = React.memo(({ count, position, onClusterClick, status, v
     }
 
     if (isVisible) {
-      // Smooth fade out and scale down at edges
-      // Map range [0.15, 0.6] to [0, 1]
       const edgeFactor = Math.max(0, Math.min(1, (dotProduct - 0.15) / 0.45));
-      
-      // Apply scale animation + edge scaling
-      const sizeFactor = 0.5 + (0.5 * edgeFactor); 
-      
-      const pulseScale = 1 + Math.sin(state.clock.elapsedTime * 2) * 0.05;
-      const finalScale = pulseScale * sizeFactor;
-      
-      groupRef.current.scale.setScalar(finalScale);
-      
-      // Apply opacity fade
+      groupRef.current.scale.setScalar(1);
+      const cssScale = 0.5 + (0.5 * edgeFactor);
+      const newTransform = `scale(${cssScale.toFixed(2)})`;
+      if (divRef.current.style.transform !== newTransform) {
+        divRef.current.style.transform = newTransform;
+      }
       if (divRef.current.style.opacity !== edgeFactor.toString()) {
         divRef.current.style.opacity = edgeFactor;
       }
