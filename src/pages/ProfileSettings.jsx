@@ -656,10 +656,10 @@ export default function ProfileSettings() {
                     onSave={(data) => updateArtistMutation.mutate({ id: artistProfile.id, data })}
                     onDelete={() => deleteArtistMutation.mutate(artistProfile.id)}
                     onAvatarChange={(url) => setArtistProfile(prev => ({ ...prev, avatar_url: url }))}
+                    user={user}
                     isSaving={updateArtistMutation.isPending}
                     isMandatory={false}
                   />
-                  <ChangePasswordSection user={user} />
                 </CardContent>
               </Card>
             </section>

@@ -8,12 +8,14 @@ import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
 import { useI18n } from '@/components/contexts/I18nContext';
 import { resizeToAvatar } from '@/components/utils/imageUtils';
+import ChangePasswordSection from '@/components/profile/ChangePasswordSection';
 
 const EditProfileForm = memo(forwardRef(function EditProfileForm({
   formData,
   onSave,
   onDelete,
   onAvatarChange,
+  user,
   isSaving,
   isMandatory = false
 }, ref) {
@@ -475,24 +477,12 @@ const EditProfileForm = memo(forwardRef(function EditProfileForm({
         </div>
       </div>
 
-      <Button
-        onClick={handleSave}
-        disabled={isSaving || !isFormValid() || (localFormData.slug && usernameAvailable === false)}
-        className="w-full bg-white hover:bg-white/90 text-black"
-      >
-        {isSaving ? (
-          <Loader2 className="w-4 h-4 animate-spin" />
-        ) : (
-          <>
-            <Check className="w-4 h-4 mr-1" />
-            {t('saveProfile')}
-          </>
-        )}
-      </Button>
+      {/* Change Password */}
+      {!isMandatory && <ChangePasswordSection user={user} />}
 
       {/* Danger Zone */}
       {!isMandatory && onDelete && (
-        <div className="mt-8 pt-6 border-t border-red-500/20">
+        <div className="mt-4 pt-4 border-t border-red-500/20">
           <div className="flex flex-col items-start">
             <h4 className="text-red-400 font-medium text-sm mb-1">{t('dangerZone')}</h4>
             <p className="text-white/40 text-xs mb-4">{t('onceDeleteAccount')}</p>
@@ -507,6 +497,21 @@ const EditProfileForm = memo(forwardRef(function EditProfileForm({
           </div>
         </div>
       )}
+
+      <Button
+        onClick={handleSave}
+        disabled={isSaving || !isFormValid() || (localFormData.slug && usernameAvailable === false)}
+        className="w-full bg-white hover:bg-white/90 text-black mt-6"
+      >
+        {isSaving ? (
+          <Loader2 className="w-4 h-4 animate-spin" />
+        ) : (
+          <>
+            <Check className="w-4 h-4 mr-1" />
+            {t('saveProfile')}
+          </>
+        )}
+      </Button>
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
