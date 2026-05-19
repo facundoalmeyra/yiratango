@@ -9,7 +9,7 @@ import { createPageUrl } from '@/utils';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
-export default function FollowButton({ artistId, className, theme = 'dark' }) {
+export default function FollowButton({ artistId, className, theme = 'dark', confirmUnfollow = false }) {
   const { t } = useI18n();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -75,7 +75,8 @@ export default function FollowButton({ artistId, className, theme = 'dark' }) {
       return;
     }
     if (isFollowing) {
-      setShowUnfollowModal(true);
+      if (confirmUnfollow) { setShowUnfollowModal(true); return; }
+      unfollowMutation.mutate();
       return;
     } else {
       followMutation.mutate();
