@@ -127,8 +127,7 @@ export default function ProfileSettings() {
       await supabase.auth.signOut({ scope: 'local' });
     },
     onSuccess: () => {
-      toast.success(t('accountDeleted'));
-      navigate(createPageUrl('Map'));
+      window.location.href = '/';
     },
     onError: (err) => {
       toast.error(err?.message || t('loginError'));
