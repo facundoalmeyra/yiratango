@@ -96,28 +96,22 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex">
-      {/* Background image — hidden on mobile */}
-      <div className="hidden md:block flex-1 relative">
-        <img src={BG} alt="" className="absolute inset-0 w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-black/50" />
-        <div className="absolute bottom-10 left-10">
-          <Logo width={120} height={48} className="" style={{}} />
-        </div>
+    <div className="min-h-screen relative flex items-center justify-center px-4 py-10">
+      {/* Full screen background */}
+      <img src={BG} alt="" className="absolute inset-0 w-full h-full object-cover" />
+      <div className="absolute inset-0 bg-black/70" />
+
+      {/* Top bar */}
+      <div className="fixed top-4 left-6 z-50">
+        <Logo width={100} height={40} className="" style={{}} />
+      </div>
+      <div className="fixed top-4 right-6 z-50">
+        <LanguageSwitcher />
       </div>
 
-      {/* Form panel */}
-      <div className="w-full md:w-[420px] md:flex-shrink-0 min-h-screen bg-black flex flex-col justify-between px-8 py-10">
-        <div className="flex justify-between items-center">
-          <div className="md:hidden">
-            <Logo width={100} height={40} className="" style={{}} />
-          </div>
-          <div className="ml-auto">
-            <LanguageSwitcher />
-          </div>
-        </div>
-
-        <div className="w-full max-w-sm mx-auto">
+      {/* Card */}
+      <div className="relative z-10 w-full max-w-sm bg-black/80 backdrop-blur-md border border-white/10 rounded-2xl px-8 py-10">
+        <div className="w-full">
           {/* Heading */}
           {mode === 'forgot' ? (
             <div className="mb-8">
@@ -249,10 +243,6 @@ export default function Login() {
               </div>
             </>
           )}
-        </div>
-
-        <div className="text-center text-xs text-white/20">
-          © {new Date().getFullYear()} Yira Tango
         </div>
       </div>
     </div>
