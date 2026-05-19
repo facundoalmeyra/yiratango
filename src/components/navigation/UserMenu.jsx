@@ -23,7 +23,7 @@ export default function UserMenu({
   calculatedHasFanProfile,
   isSearchActive
 }) {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
 
   return (
     <div className={`pointer-events-auto flex items-center justify-center flex-shrink-0 transition-opacity duration-300 ${isSearchActive ? 'opacity-0 md:opacity-100' : 'opacity-100'}`}>
@@ -115,10 +115,10 @@ export default function UserMenu({
           ) : (
           <div className="flex items-center gap-2 pointer-events-auto">
             <LanguageSwitcher />
-            <Link to={createPageUrl('Login')} className="flex items-center justify-center px-4 h-8 rounded-full text-white hover:bg-white/10 transition-all font-medium text-xs pointer-events-auto cursor-pointer whitespace-nowrap flex-shrink-0">
+            <Link to={`/${lang}/Login`} className="flex items-center justify-center px-4 h-8 rounded-full text-white hover:bg-white/10 transition-all font-medium text-xs pointer-events-auto cursor-pointer whitespace-nowrap flex-shrink-0">
               {t('login')}
             </Link>
-            <Link to={createPageUrl('Login')} className="flex items-center justify-center px-4 h-8 rounded-full bg-white text-black hover:bg-white/90 transition-all font-medium text-xs shadow-lg pointer-events-auto cursor-pointer whitespace-nowrap flex-shrink-0">
+            <Link to={`/${lang}/Login?mode=signup`} className="flex items-center justify-center px-4 h-8 rounded-full bg-white text-black hover:bg-white/90 transition-all font-medium text-xs shadow-lg pointer-events-auto cursor-pointer whitespace-nowrap flex-shrink-0">
               {t('createFreeAccount')}
             </Link>
           </div>

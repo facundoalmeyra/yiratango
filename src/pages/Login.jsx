@@ -1,12 +1,18 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { supabase } from '@/api/supabaseClient';
 import { createPageUrl } from '@/utils';
 import { useI18n } from '@/components/contexts/I18nContext';
+import { useSearchParams } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import Logo from '@/components/ui/Logo';
 import LanguageSwitcher from '@/components/map/LanguageSwitcher';
 
-const BG = 'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6985f5bb902ec2f8c9596a0d/50dcc913f_IMG_00752.png';
+const BGS = [
+  'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6985f5bb902ec2f8c9596a0d/a60633894_d1.png',
+  'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6985f5bb902ec2f8c9596a0d/af3bc4fe0_d3.png',
+  'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6985f5bb902ec2f8c9596a0d/60db9f739_d2.png',
+  'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/6985f5bb902ec2f8c9596a0d/50dcc913f_IMG_00752.png',
+];
 
 const GoogleIcon = () => (
   <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
@@ -25,7 +31,9 @@ const FacebookIcon = () => (
 
 export default function Login() {
   const { t, lang } = useI18n();
-  const [mode, setMode] = useState('signin');
+  const [searchParams] = useSearchParams();
+  const bg = useMemo(() => BGS[Math.floor(Math.random() * BGS.length)], []);
+  const [mode, setMode] = useState(() => searchParams.get('mode') === 'signup' ? 'signup' : 'signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -99,7 +107,7 @@ export default function Login() {
   return (
     <div className="min-h-screen relative flex items-center justify-center px-4 py-10">
       {/* Full screen background */}
-      <img src={BG} alt="" className="absolute inset-0 w-full h-full object-cover" />
+      <img src={bg} alt="" className="absolute inset-0 w-full h-full object-cover" />
       <div className="absolute inset-0 bg-black/70" />
 
       {/* Top bar */}
