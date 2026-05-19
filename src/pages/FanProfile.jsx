@@ -330,20 +330,29 @@ export default function FanProfile() {
     }
   });
 
+  const deleteStorageAvatar = async (avatarUrl) => {
+    if (!avatarUrl?.includes('/storage/v1/object/public/avatars/')) return;
+    const path = avatarUrl.split('/storage/v1/object/public/avatars/')[1];
+    if (path) await supabase.storage.from('avatars').remove([path]);
+  };
+
   const deleteFanMutation = useMutation({
     mutationFn: async () => {
       const email = user.email;
+      const { data: fanData } = await supabase.from('fans').select('avatar_url').eq('user_id', user?.id).maybeSingle();
       await supabase.from('fans').delete().eq('user_id', user?.id);
+      if (fanData?.avatar_url) await deleteStorageAvatar(fanData.avatar_url);
       await supabase.from('follows').delete().eq('fan_user_id', email);
       await supabase.from('visit_requests').delete().eq('fan_user_id', email);
       await supabase.from('notifications').delete().eq('fan_user_id', email);
 
-      const { data: artistRecords } = await supabase.from('artists').select('id').eq('created_by', email);
+      const { data: artistRecords } = await supabase.from('artists').select('id, avatar_url').eq('created_by', email);
       for (const artist of (artistRecords || [])) {
         await supabase.from('tours').delete().eq('artist_id', artist.id);
         await supabase.from('visit_requests').delete().eq('artist_id', artist.id);
         await supabase.from('follows').delete().eq('artist_id', artist.id);
         await supabase.from('notifications').delete().eq('artist_id', artist.id);
+        if (artist.avatar_url) await deleteStorageAvatar(artist.avatar_url);
         await supabase.from('artists').delete().eq('id', artist.id);
       }
       await supabase.rpc('delete_user');

@@ -180,14 +180,24 @@ export default function ProfileSettings() {
     },
   });
 
+  const deleteStorageAvatar = async (avatarUrl) => {
+    if (!avatarUrl?.includes('/storage/v1/object/public/avatars/')) return;
+    const path = avatarUrl.split('/storage/v1/object/public/avatars/')[1];
+    if (path) await supabase.storage.from('avatars').remove([path]);
+  };
+
   const deleteArtistMutation = useMutation({
     mutationFn: async (id) => {
       const email = user.email;
+      const { data: artistData } = await supabase.from('artists').select('avatar_url').eq('id', id).maybeSingle();
       await supabase.from('tours').delete().eq('artist_id', id);
       await supabase.from('visit_requests').delete().eq('artist_id', id);
       await supabase.from('follows').delete().eq('artist_id', id);
       await supabase.from('notifications').delete().eq('artist_id', id);
+      if (artistData?.avatar_url) await deleteStorageAvatar(artistData.avatar_url);
       await supabase.from('artists').delete().eq('id', id);
+      const { data: fanData } = await supabase.from('fans').select('avatar_url').eq('user_id', user.id).maybeSingle();
+      if (fanData?.avatar_url) await deleteStorageAvatar(fanData.avatar_url);
       await supabase.from('fans').delete().eq('user_id', user.id);
       await supabase.from('follows').delete().eq('fan_user_id', email);
       await supabase.from('visit_requests').delete().eq('fan_user_id', email);
